@@ -3,11 +3,32 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 
+def get_log_file(log_type: str) -> Path:
+    log_dir = Path(__file__).parent.parent / "logs"
+    log_files = {
+        "backend": "backend.log",
+        "llm": "llm.log",
+        "pocketbase": "pocketbase.log",
+        "startup": "startup.log",
+    }
+
+    if log_type not in log_files:
+        raise ValueError(
+            f"Unknown log type: {log_type}. Available types: {', '.join(log_files.keys())}"
+        )
+
+    return log_dir / log_files[log_type]
+
+
 def view_logs(args):
-    log_file = Path(__file__).parent.parent / "logs" / "llm.log"
+    try:
+        log_file = get_log_file(args.type)
+    except ValueError as e:
+        print(e)
+        return
 
     if not log_file.exists():
-        print("Logs file not found")
+        print(f"Log file {log_file} not found")
         return
 
     try:
@@ -32,7 +53,13 @@ def view_logs(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="View LLM interface logs")
+    parser = argparse.ArgumentParser(description="View application logs")
+    parser.add_argument(
+        "--type",
+        type=str,
+        default="llm",
+        help="Type of logs to view (backend, llm, pocketbase, startup)",
+    )
     parser.add_argument("--tail", type=int, help="Show last N lines of log")
     parser.add_argument("--since", type=int, help="Show logs for the last N hours")
 
