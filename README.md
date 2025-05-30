@@ -46,16 +46,10 @@ python -m venv venv
 venv\Scripts\activate
 ```
 
-- Linux/Mac:
-
-```bash
-source venv/bin/activate
-```
-
 3. Установите зависимости:
 
 ```bash
-pip install -r requirements.txt
+install.ps1
 ```
 
 4. Настройте переменные окружения:
@@ -67,16 +61,7 @@ set POCKETBASE_ADMIN_EMAIL=your_email
 set POCKETBASE_ADMIN_PASSWORD=your_password
 ```
 
-- Linux/Mac:
-
-```bash
-export POCKETBASE_ADMIN_EMAIL=your_email
-export POCKETBASE_ADMIN_PASSWORD=your_password
-```
-
 ## Запуск
-
-### Автоматический запуск (рекомендуется)
 
 Используйте скрипт `start.py` для запуска всех сервисов:
 
@@ -88,21 +73,6 @@ python cli/start.py
 
 - PocketBase сервер на порту 8090
 - FastAPI бэкенд на порту 8000
-
-### Ручной запуск
-
-1. Запустите PocketBase:
-
-```bash
-cd pocketbase
-./pocketbase serve
-```
-
-2. Запустите FastAPI сервер:
-
-```bash
-uvicorn main:app --reload
-```
 
 ## API Endpoints
 
@@ -132,7 +102,23 @@ uvicorn main:app --reload
 Для просмотра логов используйте:
 
 ```bash
-python cli/logs.py [--tail N] [--since HOURS]
+# Просмотр логов LLM (по умолчанию)
+python cli/logs.py
+
+# Просмотр логов бэкенда
+python cli/logs.py --type backend
+
+# Просмотр логов PocketBase
+python cli/logs.py --type pocketbase
+
+# Просмотр логов запуска
+python cli/logs.py --type startup
+
+# Просмотр последних N строк
+python cli/logs.py --type backend --tail 100
+
+# Просмотр логов за последние N часов
+python cli/logs.py --type llm --since 24
 ```
 
 ## Сборка exe
