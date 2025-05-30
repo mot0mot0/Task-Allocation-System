@@ -1,0 +1,20 @@
+# Основные зависимости
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.4.2
+pydantic[email]>=2.4.2
+python-multipart>=0.0.6
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+aiohttp>=3.8.6
+
+# LLM интерфейс
+llama-cpp-python>=0.2.11
+
+# Утилиты
+python-dotenv>=1.0.0
+pathlib>=1.0.1
+PyInstaller>=6.1.0  # Для сборки exe
+
+# Логирование
+logging>=0.5.1.2
