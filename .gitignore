@@ -40,3 +40,5 @@ assets/models/
 # PocketBase
 pocketbase/
 pocketbase.zip
+
+backend/assets/builds/
