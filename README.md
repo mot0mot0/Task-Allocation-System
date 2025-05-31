@@ -129,6 +129,38 @@ python cli/logs.py --type llm --since 24
 python cli/build.py
 ```
 
+После сборки в корневой дирректории появится файл `task-allocation-system.exe`.
+
+### Использование exe-файла
+
+1. Установка зависимостей:
+
+```bash
+./task-allocation-system.exe --install
+```
+
+2. Запуск системы:
+
+```bash
+./task-allocation-system.exe
+```
+
+3. Просмотр логов:
+
+```bash
+# Просмотр логов LLM (по умолчанию)
+./task-allocation-system.exe --logs
+
+# Просмотр логов бэкенда
+./task-allocation-system.exe --logs --type backend
+
+# Просмотр последних 100 строк логов
+./task-allocation-system.exe --logs --type pocketbase --tail 100
+
+# Просмотр логов за последние 24 часа
+./task-allocation-system.exe --logs --type llm --since 24
+```
+
 ## Тестирование
 
 Для тестирования анализа задач:
