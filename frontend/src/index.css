@@ -1,0 +1,103 @@
+@layer theme, base, components, utilities;
+@import "tailwindcss";
+
+:root {
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+    line-height: 1.5 !important;
+    font-weight: 400 !important;
+
+    color-scheme: light dark !important;
+    color: rgba(255, 255, 255, 0.87) !important;
+    background-color: #242424 !important;
+
+    font-synthesis: none !important;
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+
+    --primary-color: #72efdd !important;
+    --primary-color-text: #334155 !important;
+    --focus-ring: 0 0 0 0.2rem rgba(114, 239, 221, 0.2) !important;
+}
+
+body {
+    margin: 0 !important;
+}
+
+h1 {
+    font-size: 3.2em !important;
+    line-height: 1.1 !important;
+}
+
+/* Переопределение стилей PrimeReact */
+.p-inputtext:enabled:focus {
+    outline: 0 none !important;
+    outline-offset: 0 !important;
+    box-shadow: var(--focus-ring) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.p-inputtext:hover {
+    border-color: var(--primary-color) !important;
+}
+
+.p-button {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--primary-color-text) !important;
+}
+
+.p-button:hover {
+    background: rgba(114, 239, 221, 0.8) !important;
+    border-color: rgba(114, 239, 221, 0.9) !important;
+}
+
+.p-button:focus {
+    box-shadow: var(--focus-ring) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.p-button:enabled:active {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.p-button.p-button-outlined {
+    background: transparent !important;
+    color: var(--primary-color) !important;
+    border: 1px solid var(--primary-color) !important;
+}
+
+.p-button.p-button-outlined:hover {
+    background: rgba(114, 239, 221, 0.1) !important;
+    border-color: rgba(114, 239, 221, 0.9) !important;
+}
+
+.p-button.p-button-text {
+    background: transparent !important;
+    color: var(--primary-color) !important;
+    border-color: transparent !important;
+}
+
+.p-button.p-button-text:hover {
+    background: rgba(114, 239, 221, 0.1) !important;
+}
+
+.p-tag {
+    background: var(--primary-color) !important;
+    color: var(--primary-color-text) !important;
+}
+
+.p-dialog .p-dialog-header {
+    background: var(--primary-color) !important;
+    color: var(--primary-color-text) !important;
+}
+
+.p-dialog .p-dialog-content {
+    background: white !important;
+}
+
+.p-dialog .p-dialog-footer {
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+}
