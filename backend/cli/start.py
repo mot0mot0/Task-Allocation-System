@@ -9,9 +9,22 @@ import socket
 import re
 import requests
 from tqdm import tqdm
+import argparse
+import os
+
+
+def get_base_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        # Если запущено как exe
+        return Path(sys.executable).parent
+    else:
+        # Если запущено как скрипт
+        return Path(__file__).parent.parent
+
 
 # Setting up logging
-log_dir = Path(__file__).parent.parent / "logs"
+base_dir = get_base_dir()
+log_dir = base_dir / "logs"
 log_dir.mkdir(exist_ok=True)
 
 startup_handler = RotatingFileHandler(
@@ -56,12 +69,21 @@ def download_file(url: str, destination: Path) -> bool:
 
 
 def check_and_download_pocketbase() -> bool:
-    pocketbase_dir = Path(__file__).parent.parent.parent / "pocketbase"
+    # Determine the path to PocketBase depending on the execution method
+    if getattr(sys, "frozen", False):
+        # If running as an exe
+        pocketbase_dir = base_dir / "pocketbase"
+    else:
+        # If running as a script
+        pocketbase_dir = base_dir.parent / "pocketbase"
+
     pocketbase_dir.mkdir(parents=True, exist_ok=True)
 
     pocketbase_exe = pocketbase_dir / "pocketbase.exe"
-    pocketbase_url = "https://github.com/pocketbase/pocketbase/releases/download/v0.22.4/pocketbase_0.22.4_windows_amd64.zip"
+    current_version = "0.22.4"
+    pocketbase_url = f"https://github.com/pocketbase/pocketbase/releases/download/v{current_version}/pocketbase_{current_version}_windows_amd64.zip"
 
+    # Check if PocketBase exists
     if pocketbase_exe.exists():
         logger.info("PocketBase found")
         return True
@@ -94,20 +116,48 @@ def check_and_download_pocketbase() -> bool:
 
 
 def check_and_download_model() -> bool:
-    model_dir = Path(__file__).parent.parent / "assets" / "models"
+    model_dir = base_dir / "assets" / "models"
     model_dir.mkdir(parents=True, exist_ok=True)
 
-    model_path = model_dir / "Mistral-7B-Instruct-v0.3.Q4_K_S.gguf"
-    model_url = "https://huggingface.co/MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3.Q4_K_S.gguf"
+    print(model_dir)
 
+    model_path = model_dir / "Mistral-7B-Instruct-v0.3.Q4_K_S.gguf"
+    current_version = "v0.3.Q4_K_S"
+    model_url = f"https://huggingface.co/MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-{current_version}.gguf"
+
+    # Checking the file size
     if model_path.exists():
-        logger.info("LLM model found")
-        return True
+        try:
+            size_mb = model_path.stat().st_size / (1024 * 1024)
+            if size_mb < 1000:  # If less than 1GB, consider file corrupted
+                logger.warning(
+                    f"Model file seems to be corrupted (size: {size_mb:.2f}MB), downloading again..."
+                )
+                model_path.unlink()
+            else:
+                logger.info(f"LLM model found (size: {size_mb:.2f}MB)")
+                return True
+        except Exception as e:
+            logger.error(f"Error checking model file: {e}")
+            model_path.unlink()
 
     logger.info("LLM model not found, downloading...")
     if download_file(model_url, model_path):
-        logger.info("LLM model downloaded successfully")
-        return True
+        # Checking the file size
+        try:
+            size_mb = model_path.stat().st_size / (1024 * 1024)
+            if size_mb < 1000:
+                logger.error(
+                    f"Downloaded model file seems to be corrupted (size: {size_mb:.2f}MB)"
+                )
+                model_path.unlink()
+                return False
+            logger.info(f"LLM model downloaded successfully (size: {size_mb:.2f}MB)")
+            return True
+        except Exception as e:
+            logger.error(f"Error checking downloaded model: {e}")
+            model_path.unlink()
+            return False
     else:
         logger.error("Failed to download LLM model")
         return False
@@ -135,8 +185,14 @@ def extract_superuser_url(log_content: str) -> str:
 class ServiceManager:
     def __init__(self):
         self.processes = []
-        self.base_dir = Path(__file__).parent.parent.absolute()
-        self.pocketbase_dir = self.base_dir.parent / "pocketbase"
+        self.base_dir = base_dir
+        # Determine the path to PocketBase depending on the execution method
+        if getattr(sys, "frozen", False):
+            # If running as an exe
+            self.pocketbase_dir = self.base_dir / "pocketbase"
+        else:
+            # If running as a script
+            self.pocketbase_dir = self.base_dir.parent / "pocketbase"
         self.pocketbase_exe = self.pocketbase_dir / "pocketbase.exe"
         self.pocketbase_port = 8090
         self.backend_port = 8000
@@ -164,6 +220,15 @@ class ServiceManager:
         except Exception as e:
             logger.error(f"Error starting PocketBase: {e}")
             return None
+
+    def wait_for_pocketbase(self, timeout: int = 30) -> bool:
+        """Ожидание запуска PocketBase с таймаутом"""
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if is_port_in_use(self.pocketbase_port):
+                return True
+            time.sleep(0.5)
+        return False
 
     def start_backend(self) -> subprocess.Popen | None:
         try:
@@ -222,7 +287,50 @@ class ServiceManager:
             print(f"{superuser_url}\n")
 
 
+def install_dependencies():
+    """Устанавливает зависимости проекта"""
+    try:
+        # Set environment variables for building llama-cpp-python
+        os.environ["CMAKE_ARGS"] = (
+            "-DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DGGML_OPENMP=ON"
+        )
+
+        # Install dependencies
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
+            check=True,
+        )
+        logger.info("Dependencies installed successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error installing dependencies: {e}")
+        return False
+
+
 def main():
+    parser = argparse.ArgumentParser(description="Task Allocation System")
+    parser.add_argument("--install", action="store_true", help="Install dependencies")
+    parser.add_argument("--logs", action="store_true", help="View logs")
+    parser.add_argument(
+        "--type",
+        type=str,
+        help="Type of logs to view (backend, llm, pocketbase, startup)",
+    )
+    parser.add_argument("--tail", type=int, help="Show last N lines of log")
+    parser.add_argument("--since", type=int, help="Show logs for the last N hours")
+
+    args = parser.parse_args()
+
+    if args.install:
+        if not install_dependencies():
+            return
+
+    if args.logs:
+        from logs import view_logs
+
+        view_logs(args)
+        return
+
     # Check and download PocketBase
     if not check_and_download_pocketbase():
         logger.error("Failed to prepare PocketBase, exiting...")
@@ -252,7 +360,10 @@ def main():
             return
 
         # Waiting for PocketBase to start
-        time.sleep(5)
+        if not manager.wait_for_pocketbase():
+            logger.error("Failed to wait for PocketBase to start")
+            manager.stop_all()
+            return
 
         # Starting backend
         backend_process = manager.start_backend()
