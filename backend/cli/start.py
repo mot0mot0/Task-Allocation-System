@@ -3,6 +3,7 @@ import subprocess
 import signal
 import time
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 import socket
@@ -10,7 +11,9 @@ import re
 import requests
 from tqdm import tqdm
 import argparse
-import os
+import uvicorn
+import threading
+import zipfile
 
 
 def get_base_dir() -> Path:
@@ -27,19 +30,48 @@ base_dir = get_base_dir()
 log_dir = base_dir / "logs"
 log_dir.mkdir(exist_ok=True)
 
-startup_handler = RotatingFileHandler(
-    log_dir / "startup.log",
-    maxBytes=1024 * 1024,  # 1MB
-    backupCount=5,
-    encoding="utf-8",
+# Добавляем директорию llama_cpp DLLs для поиска
+if getattr(sys, "frozen", False):
+    llama_cpp_dll_dir = base_dir / "_internal" / "llama_cpp" / "lib"
+    if llama_cpp_dll_dir.exists():
+        os.add_dll_directory(str(llama_cpp_dll_dir))
+        print(f"Added DLL directory: {llama_cpp_dll_dir}")
+
+# Настраиваем форматтер для логов
+log_formatter = logging.Formatter(
+    "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[startup_handler, logging.StreamHandler()],
+# Настраиваем обработчик файла
+file_handler = RotatingFileHandler(
+    log_dir / "startup.log",
+    maxBytes=10 * 1024 * 1024,
+    backupCount=5,
+    encoding="utf-8",  # 10MB
 )
-logger = logging.getLogger(__name__)
+file_handler.setFormatter(log_formatter)
+
+# Настраиваем обработчик консоли
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(log_formatter)
+
+# Настраиваем логгер
+logger = logging.getLogger("build")
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+# Настраиваем основной логгер для вывода важных сообщений в консоль
+main_logger = logging.getLogger("__main__")
+main_logger.setLevel(logging.INFO)
+main_logger.addHandler(console_handler)
+main_logger.propagate = False
+
+# Отключаем вывод логов в консоль для всех остальных логгеров
+for name in logging.root.manager.loggerDict:
+    if name not in ["build", "__main__"]:  # Оставляем только основные логгеры
+        logging.getLogger(name).handlers = []
+        logging.getLogger(name).propagate = False
 
 
 def download_file(url: str, destination: Path) -> bool:
@@ -97,9 +129,6 @@ def check_and_download_pocketbase() -> bool:
         return False
 
     try:
-        # Extract archive
-        import zipfile
-
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(pocketbase_dir)
 
@@ -118,8 +147,6 @@ def check_and_download_pocketbase() -> bool:
 def check_and_download_model() -> bool:
     model_dir = base_dir / "assets" / "models"
     model_dir.mkdir(parents=True, exist_ok=True)
-
-    print(model_dir)
 
     model_path = model_dir / "Mistral-7B-Instruct-v0.3.Q4_K_S.gguf"
     current_version = "v0.3.Q4_K_S"
@@ -237,26 +264,93 @@ class ServiceManager:
                 return None
 
             logger.info("Starting FastAPI backend...")
-            process = subprocess.Popen(
-                [
-                    sys.executable,
-                    "-m",
-                    "uvicorn",
-                    "main:app",
-                    "--host",
-                    "127.0.0.1",
-                    "--port",
-                    str(self.backend_port),
-                ],
-                cwd=str(self.base_dir),
-                stdout=open(log_dir / "backend.log", "w"),
-                stderr=subprocess.STDOUT,
-                text=True,
-            )
+
+            def run_uvicorn():
+                try:
+                    # Определяем путь к main.py в зависимости от способа запуска
+                    if getattr(sys, "frozen", False):
+                        main_path = (
+                            Path(sys.executable).parent / "_internal" / "main.py"
+                        )
+                        # Добавляем _internal в sys.path
+                        sys.path.insert(0, str(main_path.parent))
+                        main_logger.info(f"Using main.py from: {main_path}")
+                    else:
+                        main_path = Path(__file__).parent.parent / "main.py"
+                        sys.path.insert(0, str(main_path.parent))
+                        main_logger.info(f"Using main.py from: {main_path}")
+
+                    # Проверяем существование файла
+                    if not main_path.exists():
+                        main_logger.error(f"main.py not found at: {main_path}")
+                        return
+
+                    # Настраиваем логирование Uvicorn
+                    uvicorn_logger = logging.getLogger("uvicorn")
+                    uvicorn_logger.handlers.clear()  # Удаляем все существующие обработчики
+                    uvicorn_file_handler = RotatingFileHandler(
+                        log_dir / "backend.log",
+                        maxBytes=1024 * 1024,  # 1MB
+                        backupCount=5,
+                        encoding="utf-8",
+                    )
+                    uvicorn_file_handler.setFormatter(
+                        logging.Formatter(
+                            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                        )
+                    )
+                    uvicorn_logger.addHandler(uvicorn_file_handler)
+                    uvicorn_logger.setLevel(logging.INFO)
+                    uvicorn_logger.propagate = False  # Отключаем распространение логов
+
+                    # Настраиваем логирование для всех остальных логгеров
+                    for name in ["uvicorn.error", "uvicorn.access", "uvicorn.asgi"]:
+                        log = logging.getLogger(name)
+                        log.handlers.clear()
+                        log.addHandler(uvicorn_file_handler)
+                        log.propagate = False
+
+                    # Запускаем uvicorn
+                    uvicorn.run(
+                        "main:app",
+                        host="127.0.0.1",
+                        port=self.backend_port,
+                        log_level="info",
+                        log_config=None,  # Отключаем дефолтную конфигурацию Uvicorn
+                    )
+                except Exception as e:
+                    logger.error(f"Error in run_uvicorn: {e}", exc_info=True)
+
+            # Запускаем uvicorn в отдельном потоке
+            backend_thread = threading.Thread(target=run_uvicorn)
+            backend_thread.daemon = True
+            backend_thread.start()
+
+            # Создаем фиктивный процесс для отслеживания состояния
+            class DummyProcess:
+                def __init__(self):
+                    self._returncode = None
+                    self.stdout = open(log_dir / "backend.log", "w")
+                    self.stderr = self.stdout
+
+                def poll(self):
+                    return self._returncode
+
+                def wait(self, timeout=None):
+                    return 0
+
+                def terminate(self):
+                    pass
+
+                def kill(self):
+                    pass
+
+            process = DummyProcess()
             self.processes.append(process)
             return process
+
         except Exception as e:
-            logger.error(f"Error starting backend: {e}")
+            logger.error(f"Error starting backend: {e}", exc_info=True)
             return None
 
     def stop_all(self):

@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from src.constants import LLAMA_INTERFACE
 from src.schemas.responses import ResponseTemplate
-from src.schemas.requests import TasksData, ExecutorData
+from src.schemas.requests import TasksData, ExecutorData, SingleTaskData
 
 
 router = APIRouter()
@@ -36,13 +36,9 @@ logger = logging.getLogger(__name__)
         ]
     ).create_response(),
 )
-async def analyze_tasks(request: Request):
+async def analyze_tasks(data: TasksData):
     try:
-        raw_data = await request.json()
-        logger.info(f"Raw request data: {json.dumps(raw_data, ensure_ascii=False)}")
-
         try:
-            data = TasksData(**raw_data)
             logger.info(
                 f"Validated data: {json.dumps(data.model_dump(), ensure_ascii=False)}"
             )
@@ -101,9 +97,58 @@ async def analyze_executor(data: ExecutorData):
 
         result = LLAMA_INTERFACE.analyze_executor(data.resume)
         result["name"] = data.name
+        result["id"] = data.id
 
         return result
 
     except Exception as e:
         logger.error(f"Error analyzing executor: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/task",
+    tags=["analyzer"],
+    responses=ResponseTemplate(
+        [
+            {
+                "code": 200,
+                "examples": {
+                    "Success": {
+                        "value": {
+                            "id": "task_id",
+                            "title": "task_title",
+                            "assessment": {
+                                "soft": {"skill1": "number", "skill2": "number"},
+                                "hard": {"skill3": "number", "skill4": "number"},
+                            },
+                        },
+                    },
+                },
+            },
+        ]
+    ).create_response(),
+)
+async def analyze_single_task(data: SingleTaskData):
+    try:
+        try:
+            logger.info(
+                f"Validated data: {json.dumps(data.model_dump(), ensure_ascii=False)}"
+            )
+        except Exception as e:
+            logger.error(f"Validation error: {str(e)}")
+            raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
+
+        # Создаем список из одной задачи
+        task_list = [data.model_dump()]
+
+        # Получаем результат анализа
+        result = next(
+            LLAMA_INTERFACE.analyze_tasks(data.project_description, task_list)
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

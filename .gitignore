@@ -37,8 +37,7 @@ ENV/
 *.gguf
 assets/models/
 
-# PocketBase
-pocketbase/
-pocketbase.zip
 
 backend/assets/builds/
+
+test_data/

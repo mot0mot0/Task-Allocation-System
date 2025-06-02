@@ -5,36 +5,31 @@ from llama_cpp import Llama
 import sys
 import time
 from pathlib import Path
+from src.schemas.requests import TaskWithSkills, ExecutorWithSkills
 
-# Создаем директорию для логов
 log_dir = Path(__file__).parent.parent / "logs"
 log_dir.mkdir(exist_ok=True)
 
-# Очищаем лог-файл при запуске
 llm_log_file = log_dir / "llm.log"
-if llm_log_file.exists():
-    llm_log_file.unlink()
 
-# Настройка форматирования логов
+# Настраиваем логирование
 log_formatter = logging.Formatter(
     "%(asctime)s [%(levelname)s] [%(name)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-# Настройка логгера
 logger = logging.getLogger("llm_interface")
 logger.setLevel(logging.INFO)
 logger.propagate = False
 
-# Добавляем обработчик для записи в файл
-file_handler = logging.FileHandler(log_dir / "llm.log", encoding="utf-8")
+# Очищаем существующие обработчики
+logger.handlers = []
+
+# Добавляем новый обработчик файла
+file_handler = logging.FileHandler(llm_log_file, encoding="utf-8", mode="a")
 file_handler.setFormatter(log_formatter)
 logger.addHandler(file_handler)
 
-# Отключаем вывод в консоль
-logger.handlers = [file_handler]
 
-
-# Перенаправляем stdout и stderr в логгер
 class StreamToLogger:
     def __init__(self, logger, level):
         self.logger = logger
@@ -43,7 +38,6 @@ class StreamToLogger:
 
     def write(self, buf):
         for line in buf.rstrip().splitlines():
-            # Определяем уровень логирования на основе содержимого сообщения
             if "ERROR" in line or "error" in line.lower():
                 self.logger.error(line.rstrip())
             elif (
@@ -59,7 +53,6 @@ class StreamToLogger:
         pass
 
 
-# Перенаправляем stdout и stderr в логгер
 sys.stdout = StreamToLogger(logger, logging.INFO)
 sys.stderr = StreamToLogger(logger, logging.ERROR)
 
@@ -317,3 +310,19 @@ class LlamaModelInterface:
         except Exception as e:
             logger.error(f"Exception during executor analysis: {str(e)}", exc_info=True)
             raise
+
+    @staticmethod
+    def find_skill_relationships(
+        tasks: list[TaskWithSkills], executors: list[ExecutorWithSkills]
+    ) -> dict[str, list[str]]:
+        relationships = {}
+        for task in tasks:
+            task_skills = [s.name for s in task.soft_skills + task.hard_skills]
+            for executor in executors:
+                executor_skills = [
+                    s.name for s in executor.soft_skills + executor.hard_skills
+                ]
+                common_skills = set(task_skills).intersection(set(executor_skills))
+                if common_skills:
+                    relationships[task.id] = list(common_skills)
+        return relationships

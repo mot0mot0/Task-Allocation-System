@@ -27,9 +27,9 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(matching.router, prefix="/matching", tags=["matching"])
+app.include_router(matching.router, prefix="/match", tags=["matching"])
 app.include_router(analyzer.router, prefix="/analyze", tags=["analyzer"])
-app.include_router(builds.router, prefix="/api", tags=["builds"])
+app.include_router(builds.router, prefix="/build", tags=["builds"])
 
 
 @app.middleware("http")

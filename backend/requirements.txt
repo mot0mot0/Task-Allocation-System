@@ -1,0 +1,25 @@
+# Основные зависимости
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.4.2
+pydantic[email]>=2.4.2
+python-multipart>=0.0.6
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+aiohttp>=3.8.6
+email-validator>=2.1.0  # Для валидации email в Pydantic
+click>=8.1.7  # Требуется для uvicorn
+h11>=0.14.0  # Требуется для uvicorn
+httptools>=0.6.1  # Требуется для uvicorn
+websockets>=12.0  # Требуется для uvicorn
+watchfiles>=0.21.0  # Требуется для uvicorn --reload
+
+# LLM интерфейс
+llama-cpp-python>=0.2.11
+
+# Утилиты
+python-dotenv>=1.0.0
+pathlib>=1.0.1
+PyInstaller>=6.1.0  # Для сборки exe
+requests>=2.31.0  # Для скачивания файлов
+tqdm>=4.66.1  # Для отображения прогресса

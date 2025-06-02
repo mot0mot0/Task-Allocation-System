@@ -1,22 +1,33 @@
 @layer theme, base, components, utilities;
 @import "tailwindcss";
 
-:root {
+* {
+    box-sizing: border-box;
+}
+
+#root {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
     line-height: 1.5 !important;
     font-weight: 400 !important;
 
     color-scheme: light dark !important;
     color: rgba(255, 255, 255, 0.87) !important;
-    background-color: #242424 !important;
 
     font-synthesis: none !important;
     text-rendering: optimizeLegibility !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
 
-    --primary-color: #72efdd !important;
-    --primary-color-text: #334155 !important;
+    --app-bg: #0a0a0a !important;
+
+    --primary-app-color: #72efdd !important;
+    --primary-hover-color: #80ffdb !important;
+    --bg-transparent: #24242470 !important;
+    --bg-transparent-hover: #5d5d5d70 !important;
+    --bg-semi-transparent: #24242492 !important;
+    --text-color-primary: #f1f4f7 !important;
+    --text-color-secondary: rgb(140, 148, 155) !important;
+    --text-color-pale: #334155 !important;
     --focus-ring: 0 0 0 0.2rem rgba(114, 239, 221, 0.2) !important;
 }
 
@@ -30,42 +41,50 @@ h1 {
 }
 
 /* Переопределение стилей PrimeReact */
+.p-inputtext {
+    background-color: #3030309c !important;
+    border: 1px solid #424242;
+    color: #f1f4f7 !important;
+    min-height: 50px;
+}
+
 .p-inputtext:enabled:focus {
     outline: 0 none !important;
     outline-offset: 0 !important;
-    box-shadow: var(--focus-ring) !important;
-    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(114, 239, 221, 0.2) !important;
+    border-color: #72efdd !important;
 }
 
 .p-inputtext:hover {
-    border-color: var(--primary-color) !important;
+    border-color: #72efdd !important;
 }
 
 .p-button {
-    background: var(--primary-color) !important;
-    border-color: var(--primary-color) !important;
-    color: var(--primary-color-text) !important;
+    background: var(--primary-app-color) !important;
+    background-color: var(--primary-app-color) !important;
+    border-color: var(--primary-app-color) !important;
+    color: #334155 !important;
 }
 
 .p-button:hover {
-    background: rgba(114, 239, 221, 0.8) !important;
-    border-color: rgba(114, 239, 221, 0.9) !important;
+    background: #72efddcc !important;
+    border-color: #72efdde6 !important;
 }
 
 .p-button:focus {
-    box-shadow: var(--focus-ring) !important;
-    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(114, 239, 221, 0.2) !important;
+    border-color: #72efdd !important;
 }
 
 .p-button:enabled:active {
-    background: var(--primary-color) !important;
-    border-color: var(--primary-color) !important;
+    background: var(--primary-app-color) !important;
+    border-color: var(--primary-app-color) !important;
 }
 
 .p-button.p-button-outlined {
     background: transparent !important;
-    color: var(--primary-color) !important;
-    border: 1px solid var(--primary-color) !important;
+    color: var(--primary-app-color) !important;
+    border: 1px solid var(--primary-app-color) !important;
 }
 
 .p-button.p-button-outlined:hover {
@@ -75,7 +94,7 @@ h1 {
 
 .p-button.p-button-text {
     background: transparent !important;
-    color: var(--primary-color) !important;
+    color: var(--primary-app-color) !important;
     border-color: transparent !important;
 }
 
@@ -84,20 +103,137 @@ h1 {
 }
 
 .p-tag {
-    background: var(--primary-color) !important;
-    color: var(--primary-color-text) !important;
+    /* background: var(--primary-app-color) !important; */
+    color: var(--text-color-pale) !important;
 }
 
-.p-dialog .p-dialog-header {
-    background: var(--primary-color) !important;
-    color: var(--primary-color-text) !important;
+.p-dialog-header {
+    background: #72efdd !important;
+    color: var(--text-color-pale) !important;
+    padding: 1rem 1.5rem !important;
+    border-top-left-radius: 0.75rem !important;
+    border-top-right-radius: 0.75rem !important;
+    border-bottom: none !important;
 }
 
 .p-dialog .p-dialog-content {
-    background: white !important;
+    background: #24242492 !important;
+    color: var(--text-color-primary) !important;
+    padding: 1.5rem !important;
 }
 
 .p-dialog .p-dialog-footer {
-    background: white !important;
-    border-top: 1px solid #e5e7eb !important;
+    background: #24242492 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1rem 1.5rem !important;
+    border-bottom-left-radius: 0.75rem !important;
+    border-bottom-right-radius: 0.75rem !important;
+}
+
+.p-dialog {
+    border-radius: 0.75rem !important;
+    background: var(--bg-semi-transparent) !important;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(10px);
+}
+
+.p-dialog-header-close:hover {
+    background-color: #24242470 !important;
+}
+
+.p-fileupload-choose {
+    background: #72efdd !important;
+    border: none;
+}
+
+.p-card {
+    background: transparent;
+    box-shadow: none;
+}
+
+.p-card-content {
+    padding: 0px !important;
+    height: 100%;
+}
+
+.p-card-body {
+    background-color: var(--bg-semi-transparent) !important;
+    padding: 10px 20px;
+    border-radius: 0.75rem;
+    height: 100%;
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+    background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #24242492;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #64626292;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #85858692;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 5px;
+}
+
+/* Кастомные стили для тултипа */
+.p-tooltip {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.p-tooltip-text {
+    max-height: 500px !important;
+    overflow-y: scroll;
+}
+
+.p-tooltip.p-tooltip-active {
+    opacity: 1;
+}
+
+.p-tooltip .p-tooltip-text {
+    background: #242424b9;
+    color: #f1f4f7;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: pre-line;
+    max-width: 300px;
+}
+
+.p-tooltip.p-tooltip-right .p-tooltip-arrow {
+    border-right-color: var(--bg-semi-transparent);
+}
+
+.p-tooltip.p-tooltip-left .p-tooltip-arrow {
+    border-left-color: var(--bg-semi-transparent);
+}
+
+.p-tooltip.p-tooltip-top .p-tooltip-arrow {
+    border-top-color: var(--bg-semi-transparent);
+}
+
+.p-tooltip.p-tooltip-bottom .p-tooltip-arrow {
+    border-bottom-color: var(--bg-semi-transparent);
+}
+
+.p-tag {
+    justify-content: start !important;
+    color: #f8f8f8 !important;
 }
