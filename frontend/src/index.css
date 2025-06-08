@@ -102,11 +102,6 @@ h1 {
     background: rgba(114, 239, 221, 0.1) !important;
 }
 
-.p-tag {
-    /* background: var(--primary-app-color) !important; */
-    color: var(--text-color-pale) !important;
-}
-
 .p-dialog-header {
     background: #72efdd !important;
     color: var(--text-color-pale) !important;
@@ -236,4 +231,21 @@ h1 {
 .p-tag {
     justify-content: start !important;
     color: #f8f8f8 !important;
+}
+
+.menu-button:focus {
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
+.p-inputswitch {
+
+}
+
+.p-inputswitch.p-highlight .p-inputswitch-slider {
+    background-color: #72efdd !important;
+}
+
+.p-inputswitch.p-highlight:hover .p-inputswitch-slider {
+    background-color: #80ffdb !important;
 }

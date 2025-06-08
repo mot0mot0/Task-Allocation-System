@@ -274,11 +274,9 @@ class ServiceManager:
                         )
                         # Добавляем _internal в sys.path
                         sys.path.insert(0, str(main_path.parent))
-                        main_logger.info(f"Using main.py from: {main_path}")
                     else:
                         main_path = Path(__file__).parent.parent / "main.py"
                         sys.path.insert(0, str(main_path.parent))
-                        main_logger.info(f"Using main.py from: {main_path}")
 
                     # Проверяем существование файла
                     if not main_path.exists():

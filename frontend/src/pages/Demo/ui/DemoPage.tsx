@@ -10,6 +10,7 @@ import { InputTextarea } from "primereact/inputtextarea"
 import { FileUpload } from "primereact/fileupload"
 import type { FileUploadUploadEvent } from "primereact/fileupload"
 import { Tooltip } from "primereact/tooltip"
+import { InputSwitch } from "primereact/inputswitch"
 import axios from "axios"
 import { BACKEND_URL } from "../../../constants"
 
@@ -17,16 +18,19 @@ interface Executor {
     id: string
     name: string
     resume: string
+    color: string
     isLoading?: boolean
     hasError?: boolean
-    analyzed_data?: string
+    analyzed_data?: AnalysisData
 }
 
 interface Task {
     id: string
     title: string
     description: string
-    analyzed_data?: string
+    start_date: string
+    end_date: string
+    analyzed_data?: AnalysisData
     color: string
     isLoading?: boolean
     hasError?: boolean
@@ -44,6 +48,8 @@ interface Skill {
 
 interface TaskSkills {
     id: string
+    start_date: string
+    end_date: string
     soft_skills: Skill[]
     hard_skills: Skill[]
 }
@@ -70,20 +76,36 @@ const DemoPage = () => {
     const [projectContext, setProjectContext] = useState("")
     const [isProjectContextFocused, setIsProjectContextFocused] =
         useState(false)
-    const [newTask, setNewTask] = useState({ title: "", description: "" })
+    const [newTask, setNewTask] = useState({ 
+        title: "", 
+        description: "", 
+        start_date: "", 
+        end_date: ""
+    })
     const [newExecutor, setNewExecutor] = useState({ name: "", resume: "" })
     const fileUploadRef = useRef<FileUpload>(null)
     const contextTextareaRef = useRef<HTMLTextAreaElement>(null)
     const [showAllocationDialog, setShowAllocationDialog] = useState(false)
     const [isAllocating, setIsAllocating] = useState(false)
     const [allocation, setAllocation] = useState<Record<string, string>>({})
+    const [isGanttView, setIsGanttView] = useState(false)
 
     const tagColors = [
-        "blue-500",
-        "green-500",
-        "yellow-500",
-        "purple-500",
-        "pink-500",
+        "!bg-[#3b82f6]",
+        "!bg-[#22c55e]",
+        "!bg-[#f59e0b]",
+        "!bg-[#8b5cf6]",
+        "!bg-[#ec4899]",
+        "!bg-[#ef4444]",
+        "!bg-[#10b981]",
+        "!bg-[#6366f1]",
+        "!bg-[#f97316]",
+        "!bg-[#14b8a6]",
+        "!bg-[#a855f7]",
+        "!bg-[#06b6d4]",
+        "!bg-[#f43f5e]",
+        "!bg-[#84cc16]",
+        "!bg-[#0ea5e9]",
     ]
 
     const getRandomColorClass = () => {
@@ -91,8 +113,24 @@ const DemoPage = () => {
         return tagColors[randomIndex]
     }
 
-    const formatAnalysisData = (data: AnalysisData) => {
-        if (!data) return ""
+    const formatAnalysisData = (item: Task | Executor) => {
+        if (item.isLoading) {
+            return "В обработке..."
+        }
+        if (item.hasError) {
+            return "Ошибка при анализе. Нажмите на кнопку обновления для повторной попытки."
+        }
+
+        let result = ""
+        
+        if ('start_date' in item && 'end_date' in item) {
+            const startDate = new Date(item.start_date).toLocaleDateString('ru-RU')
+            const endDate = new Date(item.end_date).toLocaleDateString('ru-RU')
+            result += `Сроки: ${startDate} - ${endDate}\n`
+        }
+
+        const data = item.analyzed_data
+        if (!data) return result || "Нет данных для анализа"
 
         const softSkills = data.soft
             ? Object.entries(data.soft)
@@ -113,6 +151,7 @@ const DemoPage = () => {
             : ""
 
         return [
+            result,
             softSkills && "Soft Skills:",
             softSkills,
             hardSkills && "Hard Skills:",
@@ -138,6 +177,7 @@ const DemoPage = () => {
             id: executorId,
             name: newExecutor.name,
             resume: newExecutor.resume,
+            color: getRandomColorClass(),
             isLoading: true,
             hasError: false,
             analyzed_data: undefined,
@@ -161,9 +201,7 @@ const DemoPage = () => {
                     executor.id === executorId
                         ? {
                               ...executor,
-                              analyzed_data: formatAnalysisData(
-                                  response.data.assessment
-                              ),
+                              analyzed_data: response.data,
                               isLoading: false,
                               hasError: false,
                           }
@@ -205,7 +243,7 @@ const DemoPage = () => {
                     executor.id === executorToRetry.id
                         ? {
                               ...executor,
-                              analyzed_data: formatAnalysisData(response.data),
+                              analyzed_data: response.data,
                               isLoading: false,
                               hasError: false,
                           }
@@ -225,13 +263,15 @@ const DemoPage = () => {
     }
 
     const handleAddTask = async () => {
-        if (!newTask.title || !newTask.description) return
+        if (!newTask.title || !newTask.description || !newTask.start_date || !newTask.end_date) return
 
         const taskId = Date.now().toString()
         const taskToAdd = {
             id: taskId,
             title: newTask.title,
             description: newTask.description,
+            start_date: newTask.start_date,
+            end_date: newTask.end_date,
             color: getRandomColorClass(),
             isLoading: true,
             hasError: false,
@@ -239,13 +279,15 @@ const DemoPage = () => {
         }
 
         setTasks((prevTasks) => [...prevTasks, taskToAdd])
-        setNewTask({ title: "", description: "" })
+        setNewTask({ title: "", description: "", start_date: "", end_date: "" })
 
         try {
             const response = await axios.post(`${BACKEND_URL}/analyze/task`, {
                 id: taskId,
                 title: taskToAdd.title,
                 description: taskToAdd.description,
+                start_date: taskToAdd.start_date,
+                end_date: taskToAdd.end_date,
                 project_description: projectContext,
             })
             setTasks((prevTasks) =>
@@ -253,9 +295,7 @@ const DemoPage = () => {
                     task.id === taskId
                         ? {
                               ...task,
-                              analyzed_data: formatAnalysisData(
-                                  response.data.assessment
-                              ),
+                              analyzed_data: response.data.assessment,
                               isLoading: false,
                               hasError: false,
                           }
@@ -295,9 +335,7 @@ const DemoPage = () => {
                     task.id === taskToRetry.id
                         ? {
                               ...task,
-                              analyzed_data: formatAnalysisData(
-                                  response.data.assessment
-                              ),
+                              analyzed_data: response.data.assessment,
                               isLoading: false,
                               hasError: false,
                           }
@@ -323,16 +361,18 @@ const DemoPage = () => {
         if (item.hasError) {
             return "Ошибка при анализе. Нажмите на кнопку обновления для повторной попытки."
         }
-        return item.analyzed_data || "Нет данных для анализа"
+        return formatAnalysisData(item) || "Нет данных для анализа"
     }
 
     const prepareAllocationData = (): AllocationRequest => {
         const tasksData: TaskSkills[] = tasks.map((task) => {
             const assessment = task.analyzed_data
-                ? JSON.parse(task.analyzed_data)
+                ? task.analyzed_data
                 : { soft: {}, hard: {} }
             return {
                 id: task.id,
+                start_date: task.start_date,
+                end_date: task.end_date,
                 soft_skills: Object.entries(assessment.soft || {}).map(
                     ([name, level]) => ({
                         name,
@@ -350,7 +390,7 @@ const DemoPage = () => {
 
         const executorsData: ExecutorSkills[] = executors.map((executor) => {
             const assessment = executor.analyzed_data
-                ? JSON.parse(executor.analyzed_data)
+                ? executor.analyzed_data
                 : { soft: {}, hard: {} }
             return {
                 id: executor.id,
@@ -379,14 +419,16 @@ const DemoPage = () => {
         setShowAllocationDialog(true)
         setIsAllocating(true)
         setAllocation({})
+        console.log(allocation)
 
         try {
             const data = prepareAllocationData()
-            const response = await axios.post<AllocationResponse>(
+            await axios.post<AllocationResponse>(
                 `${BACKEND_URL}/match/allocate`,
                 data
-            )
+            ).then((response) => {
             setAllocation(response.data.allocation)
+            })
         } catch (error) {
             console.error("Error allocating tasks:", error)
         } finally {
@@ -394,18 +436,31 @@ const DemoPage = () => {
         }
     }
 
-    const getAllocationTooltip = (taskId: string) => {
-        const executorId = allocation[taskId]
-        if (!executorId) return "Нет назначенного исполнителя"
+    const handleDeleteTask = (taskId: string) => {
+        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+        // Remove task from allocation if it exists
+        setAllocation((prevAllocation) => {
+            const newAllocation = { ...prevAllocation };
+            delete newAllocation[taskId];
+            return newAllocation;
+        });
+    };
 
-        const executor = executors.find((e) => e.id === executorId)
-        if (!executor) return "Исполнитель не найден"
+    const handleDeleteExecutor = (executorId: string) => {
+        setExecutors((prevExecutors) => prevExecutors.filter((executor) => executor.id !== executorId));
 
-        return `Назначен исполнитель: ${executor.name}`
-    }
+        setAllocation((prevAllocation) => {
+            const newAllocation = { ...prevAllocation };
+            Object.entries(newAllocation).forEach(([taskId, assignedExecutorId]) => {
+                if (assignedExecutorId === executorId) {
+                    delete newAllocation[taskId];
+                }
+            });
+            return newAllocation;
+        });
+    };
 
     useEffect(() => {
-        // Обновляем тултипы при изменении данных
         const taskTags = document.querySelectorAll(".task-tag")
         const executorTags = document.querySelectorAll(".executor-tag")
 
@@ -434,10 +489,11 @@ const DemoPage = () => {
                 {`
                     .p-tooltip {
                         max-height: 80vh;
-                        overflow-y: auto;
                     }
                     .p-tooltip-text {
                         white-space: pre-line;
+                        max-height: 80vh;
+                        overflow-y: auto;
                     }
                 `}
             </style>
@@ -498,8 +554,20 @@ const DemoPage = () => {
                                         />
                                         <Tag
                                             id={`task-${task.id}`}
-                                            value={task.title}
-                                            className={`task-tag !bg-${task.color} cursor-default overflow-hidden px-3 py-2 text-left text-lg text-ellipsis whitespace-nowrap text-[#f8f8f8]`}
+                                            value={
+                                                <div className="flex items-center gap-2">
+                                                    <span>{task.title}</span>
+                                                    <i 
+                                                        className="pi pi-times text-[#ef4444] text-sm cursor-pointer hover:text-[#dc2626] p-1 rounded-full hover:bg-[#ffffff75] transition-colors"
+                                                        style={{ fontSize: '0.8rem' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteTask(task.id);
+                                                        }}
+                                                    />
+                                                </div>
+                                            }
+                                            className={`task-tag ${task.color} cursor-default overflow-hidden px-3 py-2 text-left text-lg text-ellipsis whitespace-nowrap text-[#f8f8f8]`}
                                         />
                                         {task.isLoading && (
                                             <ProgressSpinner
@@ -516,9 +584,7 @@ const DemoPage = () => {
                                             <Button
                                                 icon="pi pi-refresh"
                                                 className="p-button-rounded p-button-danger p-button-text !h-[26px] !w-[26px]"
-                                                onClick={() =>
-                                                    handleRetryTask(task)
-                                                }
+                                                onClick={() => handleRetryTask(task)}
                                             />
                                         )}
                                     </div>
@@ -530,9 +596,7 @@ const DemoPage = () => {
                                 <div className="field flex-1">
                                     <InputText
                                         value={newTask.title}
-                                        onChange={(
-                                            e: ChangeEvent<HTMLInputElement>
-                                        ) =>
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                             setNewTask({
                                                 ...newTask,
                                                 title: e.target.value,
@@ -549,12 +613,40 @@ const DemoPage = () => {
                                     className="!border-none !bg-(--primary-app-color) !text-[#334155] transition-all duration-300 hover:!bg-(--primary-app-color)/80"
                                 />
                             </div>
+                            <div className="flex gap-4">
+                                <div className="field flex-1">
+                                    <InputText
+                                        type="date"
+                                        value={newTask.start_date}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                            setNewTask({
+                                                ...newTask,
+                                                start_date: e.target.value,
+                                            })
+                                        }
+                                        placeholder="Дата начала"
+                                        className="w-full"
+                                    />
+                                </div>
+                                <div className="field flex-1">
+                                    <InputText
+                                        type="date"
+                                        value={newTask.end_date}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                            setNewTask({
+                                                ...newTask,
+                                                end_date: e.target.value,
+                                            })
+                                        }
+                                        placeholder="Дата окончания"
+                                        className="w-full"
+                                    />
+                                </div>
+                            </div>
                             <div className="field flex-1">
                                 <InputTextarea
                                     value={newTask.description}
-                                    onChange={(
-                                        e: ChangeEvent<HTMLTextAreaElement>
-                                    ) =>
+                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                                         setNewTask({
                                             ...newTask,
                                             description: e.target.value,
@@ -569,7 +661,7 @@ const DemoPage = () => {
                     </div>
                 </Card>
 
-                <div className="flex flex-col gap-8">
+                <div className="flex flex-col gap-8 max-w-[350px]">
                     <Card className="flex-1 shadow-sm">
                         <div className="flex flex-col justify-between gap-4 py-3">
                             <Button
@@ -598,8 +690,20 @@ const DemoPage = () => {
                                         />
                                         <Tag
                                             id={`executor-${executor.id}`}
-                                            value={executor.name}
-                                            className="executor-tag cursor-default bg-(--primary-app-color) px-3 py-2 text-lg text-[#334155]"
+                                            value={
+                                                <div className="flex items-center gap-2">
+                                                    <span>{executor.name.trim().split(" ")[0]}</span>
+                                                    <i 
+                                                        className="pi pi-times text-[#ef4444] text-sm cursor-pointer hover:text-[#dc2626] p-1 rounded-full hover:bg-[#ffffff75] transition-colors"
+                                                        style={{ fontSize: '0.8rem' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteExecutor(executor.id);
+                                                        }}
+                                                    />
+                                                </div>
+                                            }
+                                            className={`executor-tag cursor-default ${executor.color} px-3 py-2 text-lg text-[#334155]`}
                                         />
                                         {executor.isLoading && (
                                             <ProgressSpinner
@@ -612,18 +716,13 @@ const DemoPage = () => {
                                                 animationDuration=".5s"
                                             />
                                         )}
-                                        {executor.hasError &&
-                                            !executor.isLoading && (
-                                                <Button
-                                                    icon="pi pi-refresh"
-                                                    className="p-button-rounded p-button-danger p-button-text !h-[20px] !w-[20px]"
-                                                    onClick={() =>
-                                                        handleRetryExecutor(
-                                                            executor
-                                                        )
-                                                    }
-                                                />
-                                            )}
+                                        {executor.hasError && !executor.isLoading && (
+                                            <Button
+                                                icon="pi pi-refresh"
+                                                className="p-button-rounded p-button-danger p-button-text !h-[20px] !w-[20px]"
+                                                onClick={() => handleRetryExecutor(executor)}
+                                            />
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -733,40 +832,216 @@ const DemoPage = () => {
                         </span>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-6 p-4">
-                        {tasks.map((task) => (
-                            <div
-                                key={task.id}
-                                className="flex items-center gap-4"
-                            >
-                                <Tooltip
-                                    target={`#allocation-task-${task.id}`}
-                                    content={getAllocationTooltip(task.id)}
-                                    position="bottom"
-                                    autoHide={false}
-                                />
-                                <Tag
-                                    id={`allocation-task-${task.id}`}
-                                    value={task.title}
-                                    className={`task-tag !bg-${task.color} cursor-default overflow-hidden px-3 py-2 text-left text-lg text-ellipsis whitespace-nowrap text-[#f8f8f8]`}
-                                />
-                                {allocation[task.id] && (
-                                    <>
-                                        <span className="text-lg">→</span>
-                                        <Tag
-                                            value={
-                                                executors.find(
-                                                    (e) =>
-                                                        e.id ===
-                                                        allocation[task.id]
-                                                )?.name || ""
-                                            }
-                                            className="executor-tag cursor-default bg-(--primary-app-color) px-3 py-2 text-lg text-[#334155]"
-                                        />
-                                    </>
-                                )}
+                    <div className="flex flex-col gap-2">
+                        {isGanttView ? (
+                            <div className="flex flex-col gap-4 p-4">
+                                <div className="flex flex-col gap-4">
+                                    {executors.map((executor) => (
+                                        <div key={executor.id} className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <Tooltip
+                                                    target={`#gantt-executor-${executor.id}`}
+                                                    content={getTooltipContent(executor)}
+                                                    showDelay={150}
+                                                    hideDelay={300}
+                                                    mouseTrackTop={0}
+                                                    position="bottom"
+                                                    autoHide={false}
+                                                />
+                                                <label id={`gantt-executor-${executor.id}`} className="text-md font-medium text-(--text-color-secondary) cursor-default">
+                                                    {executor.name}
+                                                </label>
+                                            </div>
+                                            <div className="flex flex-col gap-2">
+                                                <div className="relative h-6 w-full border-b border-[#424242]">
+                                                    {(() => {
+                                                        const minDate = new Date(Math.min(...tasks.map(t => new Date(t.start_date).getTime())));
+                                                        const maxDate = new Date(Math.max(...tasks.map(t => new Date(t.end_date).getTime())));
+                                                        const totalDays = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24);
+                                                        const months = [];
+                                                        let currentDate = new Date(minDate);
+                                                        
+                                                        while (currentDate <= maxDate) {
+                                                            const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                                                            const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                                                            const monthStartOffset = ((monthStart.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+                                                            const monthWidth = ((monthEnd.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+                                                            
+                                                            months.push(
+                                                                <div
+                                                                    key={monthStart.toISOString()}
+                                                                    className="absolute h-full border-r border-[#424242]"
+                                                                    style={{
+                                                                        left: `${monthStartOffset}%`,
+                                                                        width: `${monthWidth}%`,
+                                                                    }}
+                                                                >
+                                                                    <span className="absolute -top-6 left-2 text-xs text-(--text-color-secondary)">
+                                                                        {monthStart.toLocaleString('ru-RU', { month: 'short', year: 'numeric' })}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                            
+                                                            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+                                                        }
+                                                        
+                                                        return months;
+                                                    })()}
+                                                </div>
+                                                {tasks
+                                                    .filter((task) => allocation[task.id] === executor.id)
+                                                    .map((task) => {
+                                                        const startDate = new Date(task.start_date);
+                                                        const endDate = new Date(task.end_date);
+                                                        const minDate = new Date(Math.min(...tasks.map(t => new Date(t.start_date).getTime())));
+                                                        const maxDate = new Date(Math.max(...tasks.map(t => new Date(t.end_date).getTime())));
+                                                        const totalDays = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24);
+                                                        const startOffset = ((startDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+                                                        const width = ((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+                                                        
+                                                        return (
+                                                            <div key={task.id} className="relative h-8 w-full">
+                                                                <div className="absolute inset-0 grid grid-cols-[repeat(52,1fr)] gap-px">
+                                                                    {Array.from({ length: 52 }).map((_, i) => (
+                                                                        <div key={i} className="h-full border-r border-[#424242]/30" />
+                                                                    ))}
+                                                                </div>
+                                                                <Tooltip
+                                                                    target={`#gantt-task-${task.id}`}
+                                                                    content={getTooltipContent(task)}
+                                                                    position="top"
+                                                                    autoHide={false}
+                                                                />
+                                                                <div
+                                                                    id={`gantt-task-${task.id}`}
+                                                                    className={`absolute h-full overflow-hidden rounded-md ${task.color} cursor-default`}
+                                                                    style={{
+                                                                        left: `${startOffset}%`,
+                                                                        width: `${width}%`,
+                                                                    }}
+                                                                >
+                                                                    <span className="px-2 py-1 text-sm text-[#f8f8f8] truncate">
+                                                                        {task.title}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        ))}
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <div className="flex min-w-max gap-4 p-4">
+                                    {executors.map((executor) => (
+                                        <div key={executor.id} className="flex flex-1 min-w-[300px] flex-col gap-4">
+                                            <div className="flex items-center justify-center rounded-md bg-[#72efdd] px-4 py-2">
+                                                <Tooltip
+                                                    target={`#executor-${executor.id}`}
+                                                    content={getTooltipContent(
+                                                        executor
+                                                    )}
+                                                    showDelay={150}
+                                                    hideDelay={300}
+                                                    mouseTrackTop={0}
+                                                    position="bottom"
+                                                    autoHide={false}
+                                                />
+                                                <label id={`executor-${executor.id}`} className="w-full text-center text-md font-medium text-[#334155] cursor-default">
+                                                    {executor.name}
+                                                </label>
+                                            </div>
+                                            <div className="flex min-h-[300px] flex-col gap-2 rounded-md border border-[#424242] bg-[#3030309c] p-4">
+                                                {tasks
+                                                    .filter((task) => allocation[task.id] === executor.id)
+                                                    .map((task) => (
+                                                        <div key={task.id} className="flex flex-col gap-1">
+                                                            <Tooltip
+                                                                target={`#allocation-task-${task.id}`}
+                                                                content={getTooltipContent(task)}
+                                                                position="bottom"
+                                                                autoHide={false}
+                                                            />
+                                                            <Tag
+                                                                id={`allocation-task-${task.id}`}
+                                                                value={task.title}
+                                                                className={`task-tag ${task.color} cursor-default overflow-hidden px-3 py-2 text-left text-lg text-ellipsis whitespace-nowrap text-[#f8f8f8]`}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                {tasks.filter((task) => allocation[task.id] === executor.id).length === 0 && (
+                                                    <div className="flex h-full items-center justify-center rounded-md border border-dashed border-[#424242] px-4 py-8">
+                                                        <span className="text-(--text-color-secondary)">Нет назначенных задач</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex justify-between px-4 gap-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-(--text-color-secondary)">Список</span>
+                                    <InputSwitch checked={isGanttView} onChange={(e) => setIsGanttView(e.value)} />
+                                    <span className="text-(--text-color-secondary)">Диаграмма Ганта</span>
+                                </div>
+                                <div className="relative">
+                                    <Tooltip
+                                        target="#unassigned-tasks-button"
+                                        content="Показать нераспределенные задачи"
+                                        position="left"
+                                    />
+                                    <Button
+                                        id="unassigned-tasks-button"
+                                        icon="pi pi-list"
+                                        className={`menu-button p-button-rounded p-button-text !h-[48px] !w-[48px] ${
+                                            tasks.some((task) => allocation[task.id] === "unassigned")
+                                                ? "!text-[#ef4444] hover:!bg-[#ef4444]/10"
+                                                : "!text-[#424242] cursor-not-allowed"
+                                        }`}
+                                        onClick={() => {
+                                            if (tasks.some((task) => allocation[task.id] === "unassigned")) {
+                                                const popup = document.getElementById("unassigned-tasks-popup");
+                                                if (popup) {
+                                                    popup.style.display = popup.style.display === "none" ? "block" : "none";
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    {tasks.some((task) => allocation[task.id] === "unassigned") && (
+                                        <div
+                                            id="unassigned-tasks-popup"
+                                            className="absolute bottom-full right-1/2 mb-2 hidden  transform"
+                                            style={{ minWidth: "300px" }}
+                                        >
+                                            <div className="flex flex-col gap-2 rounded-md border border-[#424242] bg-[#3030309c] p-4 shadow-lg">
+                                                <div className="flex flex-col gap-2">
+                                                    {tasks
+                                                        .filter((task) => allocation[task.id] === "unassigned")
+                                                        .map((task) => (
+                                                            <div key={task.id} className="flex flex-col gap-1">
+                                                                <Tooltip
+                                                                    target={`#allocation-task-${task.id}`}
+                                                                    content={getTooltipContent(task)}
+                                                                    position="left"
+                                                                    autoHide={false}
+                                                                />
+                                                                <Tag
+                                                                    id={`allocation-task-${task.id}`}
+                                                                    value={task.title}
+                                                                    className={`task-tag ${task.color} cursor-default overflow-hidden px-3 py-2 text-left text-lg text-ellipsis whitespace-nowrap text-[#f8f8f8]`}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                        </div>
                     </div>
                 )}
             </Dialog>

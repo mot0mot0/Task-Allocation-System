@@ -1,5 +1,5 @@
-from typing import List, Dict
-from pydantic import BaseModel, EmailStr
+from datetime import datetime
+from pydantic import BaseModel, EmailStr, Field
 
 
 class Task(BaseModel):
@@ -41,21 +41,50 @@ class SingleTaskData(BaseModel):
 
 class SkillLevel(BaseModel):
     name: str
-    level: int
+    level: int = Field(ge=1, le=10)
 
 
 class TaskWithSkills(BaseModel):
     id: str
-    soft_skills: List[SkillLevel]
-    hard_skills: List[SkillLevel]
+    title: str
+    description: str
+    start_date: datetime
+    end_date: datetime
+    soft_skills: list[SkillLevel] = []
+    hard_skills: list[SkillLevel] = []
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 
 class ExecutorWithSkills(BaseModel):
     id: str
-    soft_skills: List[SkillLevel]
-    hard_skills: List[SkillLevel]
+    name: str
+    soft_skills: list[SkillLevel] = []
+    hard_skills: list[SkillLevel] = []
+
+
+class TaskAnalysisRequest(BaseModel):
+    id: str
+    title: str
+    description: str
+    start_date: str
+    end_date: str
+    project_description: str = ""
+
+
+class ExecutorAnalysisRequest(BaseModel):
+    id: str
+    name: str
+    resume: str
 
 
 class AllocationRequest(BaseModel):
-    tasks: List[TaskWithSkills]
-    executors: List[ExecutorWithSkills]
+    tasks: list[TaskWithSkills]
+    executors: list[ExecutorWithSkills]
+
+
+class AllocationResponse(BaseModel):
+    allocation: dict[str, str]

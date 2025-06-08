@@ -1,16 +1,17 @@
 import json
 import logging
-
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
+from datetime import datetime
 
 from src.constants import LLAMA_INTERFACE
 from src.schemas.responses import ResponseTemplate
-from src.schemas.requests import TasksData, ExecutorData, SingleTaskData
+from src.schemas.requests import TasksData, ExecutorData, SingleTaskData, TaskAnalysisRequest, ExecutorAnalysisRequest, TaskWithSkills, ExecutorWithSkills
+from services.llm_analyzer import LLMAnalyzer
 
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
+analyzer = LLMAnalyzer()
 
 
 @router.post(
@@ -39,11 +40,8 @@ logger = logging.getLogger(__name__)
 async def analyze_tasks(data: TasksData):
     try:
         try:
-            logger.info(
-                f"Validated data: {json.dumps(data.model_dump(), ensure_ascii=False)}"
-            )
+            json.dumps(data.model_dump(), ensure_ascii=False)
         except Exception as e:
-            logger.error(f"Validation error: {str(e)}")
             raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
 
         async def generate():
@@ -55,7 +53,6 @@ async def analyze_tasks(data: TasksData):
                 ):
                     yield json.dumps(result, ensure_ascii=False)
             except Exception as e:
-                logger.error(f"Error in generate: {str(e)}")
                 error_response = {"error": str(e), "status": "error"}
                 yield json.dumps(error_response, ensure_ascii=False)
 
@@ -65,7 +62,6 @@ async def analyze_tasks(data: TasksData):
         )
 
     except Exception as e:
-        logger.error(f"Error processing request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -93,8 +89,6 @@ async def analyze_tasks(data: TasksData):
 )
 async def analyze_executor(data: ExecutorData):
     try:
-        logger.info(f"Analyzing executor: {data.name}")
-
         result = LLAMA_INTERFACE.analyze_executor(data.resume)
         result["name"] = data.name
         result["id"] = data.id
@@ -102,7 +96,6 @@ async def analyze_executor(data: ExecutorData):
         return result
 
     except Exception as e:
-        logger.error(f"Error analyzing executor: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -132,11 +125,8 @@ async def analyze_executor(data: ExecutorData):
 async def analyze_single_task(data: SingleTaskData):
     try:
         try:
-            logger.info(
-                f"Validated data: {json.dumps(data.model_dump(), ensure_ascii=False)}"
-            )
+            json.dumps(data.model_dump(), ensure_ascii=False)
         except Exception as e:
-            logger.error(f"Validation error: {str(e)}")
             raise HTTPException(status_code=422, detail=f"Validation error: {str(e)}")
 
         # Создаем список из одной задачи
@@ -150,5 +140,34 @@ async def analyze_single_task(data: SingleTaskData):
         return result
 
     except Exception as e:
-        logger.error(f"Error processing request: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analyze/task")
+async def analyze_task(request: TaskAnalysisRequest):
+    try:
+        # Преобразуем строки дат в datetime
+        start_date = datetime.fromisoformat(request.start_date)
+        end_date = datetime.fromisoformat(request.end_date)
+        
+        # Проверяем корректность дат
+        if end_date <= start_date:
+            raise HTTPException(status_code=400, detail="End date must be after start date")
+            
+        assessment = await analyzer.analyze_task(
+            request.task,
+            start_date,
+            end_date
+        )
+        return {"assessment": assessment}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analyze/executor")
+async def analyze_executor(request: ExecutorAnalysisRequest):
+    try:
+        assessment = await analyzer.analyze_executor(request.executor)
+        return {"assessment": assessment}
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

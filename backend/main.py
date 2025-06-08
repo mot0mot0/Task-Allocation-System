@@ -1,5 +1,4 @@
 import logging
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -7,42 +6,29 @@ from fastapi.responses import JSONResponse
 from routers import auth, matching, analyzer, builds
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-app = FastAPI(
-    title="Task Allocation System",
-    description="Backend API для системы распределения задач",
-    version="1.0.0",
-)
+app = FastAPI()
 
-origins = ["http://localhost:5000", "*"]
-
+# Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Подключаем роутеры
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(matching.router, prefix="/match", tags=["matching"])
 app.include_router(analyzer.router, prefix="/analyze", tags=["analyzer"])
 app.include_router(builds.router, prefix="/build", tags=["builds"])
 
-
 @app.middleware("http")
-async def block_root_requests(request: Request, call_next):
-    if request.url.path == "/":
-        return JSONResponse(
-            status_code=200,
-            content={
-                "message": "Welcome to Task Allocation System API",
-                "version": "1.0.0",
-                "documentation": "/docs",
-                "status": "success",
-            },
-        )
+async def log_requests(request: Request, call_next):
+    logging.info(f"Request: {request.method} {request.url}")
     response = await call_next(request)
     return response
