@@ -1,17 +1,14 @@
 import json
-import logging
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from datetime import datetime
 
 from src.constants import LLAMA_INTERFACE
 from src.schemas.responses import ResponseTemplate
-from src.schemas.requests import TasksData, ExecutorData, SingleTaskData, TaskAnalysisRequest, ExecutorAnalysisRequest, TaskWithSkills, ExecutorWithSkills
-from services.llm_analyzer import LLMAnalyzer
+from src.schemas.requests import TasksData, ExecutorData, SingleTaskData, TaskAnalysisRequest, ExecutorAnalysisRequest
 
 
 router = APIRouter()
-analyzer = LLMAnalyzer()
 
 
 @router.post(
@@ -146,15 +143,13 @@ async def analyze_single_task(data: SingleTaskData):
 @router.post("/analyze/task")
 async def analyze_task(request: TaskAnalysisRequest):
     try:
-        # Преобразуем строки дат в datetime
         start_date = datetime.fromisoformat(request.start_date)
         end_date = datetime.fromisoformat(request.end_date)
         
-        # Проверяем корректность дат
         if end_date <= start_date:
             raise HTTPException(status_code=400, detail="End date must be after start date")
             
-        assessment = await analyzer.analyze_task(
+        assessment = await LLAMA_INTERFACE.analyze_task(
             request.task,
             start_date,
             end_date
@@ -167,7 +162,7 @@ async def analyze_task(request: TaskAnalysisRequest):
 @router.post("/analyze/executor")
 async def analyze_executor(request: ExecutorAnalysisRequest):
     try:
-        assessment = await analyzer.analyze_executor(request.executor)
+        assessment = await LLAMA_INTERFACE.analyze_executor(request.executor)
         return {"assessment": assessment}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

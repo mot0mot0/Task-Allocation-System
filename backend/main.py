@@ -27,8 +27,21 @@ app.include_router(matching.router, prefix="/match", tags=["matching"])
 app.include_router(analyzer.router, prefix="/analyze", tags=["analyzer"])
 app.include_router(builds.router, prefix="/build", tags=["builds"])
 
+@app.get("/")
+async def health_check():
+    return JSONResponse(
+        content={
+            "status": "ok",
+            "message": "Service is running",
+            "version": "1.0.0"
+        },
+        status_code=200
+    )
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logging.info(f"Request: {request.method} {request.url}")
     response = await call_next(request)
     return response
+
+
