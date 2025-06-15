@@ -274,7 +274,6 @@ class ServiceManager:
             return None
 
     def wait_for_pocketbase(self, timeout: int = 30) -> bool:
-        """Ожидание запуска PocketBase с таймаутом"""
         start_time = time.time()
         while time.time() - start_time < timeout:
             if is_port_in_use(self.pocketbase_port):

@@ -28,10 +28,6 @@ class SkillNormalizer:
         self.synonyms = SKILL_SYNONYMS
 
     def normalize_skill_name(self, skill_name: str) -> str:
-        """
-        Нормализует название навыка, приводя его к каноническому виду.
-        Если навык не найден в словаре синонимов, возвращает оригинальное название.
-        """
         skill_name = skill_name.lower().strip()
         
         # Проверяем, является ли название каноническим
@@ -46,9 +42,6 @@ class SkillNormalizer:
         return skill_name
 
     def normalize_skills(self, skills: list[SkillLevel]) -> list[SkillLevel]:
-        """
-        Нормализует список навыков, объединяя дубликаты и приводя названия к каноническому виду.
-        """
         normalized_skills = []
         
         for skill in skills:
@@ -69,13 +62,7 @@ class SkillNormalizer:
         return normalized_skills
 
     def normalize_task_skills(self, task_skills: list[SkillLevel]) -> list[SkillLevel]:
-        """
-        Нормализует навыки задачи.
-        """
         return self.normalize_skills(task_skills)
 
     def normalize_executor_skills(self, executor_skills: list[SkillLevel]) -> list[SkillLevel]:
-        """
-        Нормализует навыки исполнителя.
-        """
         return self.normalize_skills(executor_skills)

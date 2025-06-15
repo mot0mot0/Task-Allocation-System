@@ -41,7 +41,6 @@ class TaskAllocator:
 
     def calculate_overlap_score(self, task1_start: datetime, task1_end: datetime, 
                               task2_start: datetime, task2_end: datetime) -> float:
-        """Рассчитывает степень пересечения сроков двух задач"""
         try:
             latest_start = max(task1_start, task2_start)
             earliest_end = min(task1_end, task2_end)
@@ -60,9 +59,6 @@ class TaskAllocator:
 
     def calculate_executor_load(self, executor_id: str, allocation: dict[str, str], 
                               tasks: list[TaskWithSkills]) -> tuple[int, float]:
-        """Рассчитывает нагрузку на исполнителя:
-        - количество текущих задач
-        - среднее пересечение сроков"""
         try:
             executor_tasks = [t for t in tasks if allocation.get(t.id) == executor_id]
             
@@ -89,7 +85,6 @@ class TaskAllocator:
             return 0, 0.0
 
     def skill_match_score(self, task: TaskWithSkills, executor: ExecutorWithSkills) -> float:
-        """Рассчитывает соответствие навыков исполнителя требованиям задачи"""
         try:
             # Нормализуем навыки
             task_soft_skills = self.normalizer.normalize_skills(task.soft_skills)
@@ -138,16 +133,6 @@ class TaskAllocator:
             return 0.0
 
     def allocate_tasks(self, tasks: List[TaskWithSkills], executors: List[ExecutorWithSkills]) -> Dict[str, List[TaskWithSkills]]:
-        """
-        Распределяет задачи между разработчиками на основе их навыков и опыта.
-        
-        Args:
-            tasks: Список задач для распределения
-            executors: Список доступных разработчиков
-            
-        Returns:
-            Dict[str, List[TaskWithSkills]]: Словарь с распределенными задачами
-        """
         logger.info(f"Starting task allocation for {len(tasks)} tasks among {len(executors)} executors")
         
         try:
@@ -192,16 +177,6 @@ class TaskAllocator:
             raise
 
     def _find_best_executor(self, task: TaskWithSkills, executors: List[ExecutorWithSkills]) -> ExecutorWithSkills:
-        """
-        Находит наиболее подходящего разработчика для задачи.
-        
-        Args:
-            task: Задача для распределения
-            executors: Список доступных разработчиков
-            
-        Returns:
-            ExecutorWithSkills: Наиболее подходящий разработчик
-        """
         try:
             best_score = -1
             best_executor = None
@@ -225,16 +200,6 @@ class TaskAllocator:
             raise
 
     def _calculate_fit_score(self, task: TaskWithSkills, executor: ExecutorWithSkills) -> float:
-        """
-        Рассчитывает оценку соответствия разработчика задаче.
-        
-        Args:
-            task: Задача для распределения
-            executor: Разработчик
-            
-        Returns:
-            float: Оценка соответствия (0-1)
-        """
         try:
             # Базовые веса для разных факторов
             skill_weight = 0.5
@@ -265,7 +230,6 @@ class TaskAllocator:
             raise
 
     def _calculate_skill_match(self, task: TaskWithSkills, executor: ExecutorWithSkills) -> float:
-        """Рассчитывает соответствие навыков разработчика требованиям задачи."""
         try:
             # Рассчитываем соответствие soft skills
             soft_score = 0.0
@@ -305,7 +269,6 @@ class TaskAllocator:
             raise
 
     def _calculate_load_score(self, executor: ExecutorWithSkills) -> float:
-        """Рассчитывает оценку загрузки исполнителя."""
         try:
             current_tasks = len(self.allocated_tasks.get(executor.id, []))
             max_tasks = 5  # Можно сделать настраиваемым параметром
@@ -318,7 +281,6 @@ class TaskAllocator:
             raise
 
     def _calculate_experience_match(self, task: TaskWithSkills, executor: ExecutorWithSkills) -> float:
-        """Рассчитывает соответствие опыта разработчика требованиям задачи."""
         try:
             # Рассчитываем средний уровень навыков исполнителя
             executor_skill_levels = [

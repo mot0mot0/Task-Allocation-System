@@ -309,29 +309,29 @@ coll = COLLECT(
         for lib in llama_cpp_libs:
             shutil.copy2(lib, llama_cpp_lib_dir)
 
-        # # Создаем zip архив
-        # logger.info("Creating zip archive")
-        # zip_path = builds_dir / f"pm_assistant.zip"
-        #
-        # total_files = sum([len(files) for _, _, files in os.walk(pm_assistant_dir)])
-        # processed_files = 0
-        #
-        # with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        #     for root, dirs, files in os.walk(pm_assistant_dir):
-        #         for file in files:
-        #             file_path = os.path.join(root, file)
-        #             arcname = os.path.relpath(file_path, pm_assistant_dir)
-        #             logger.info(f"Adding to archive: {arcname}")
-        #             zipf.write(file_path, arcname)
-        #             processed_files += 1
-        #             if processed_files % 10 == 0:
-        #                 logger.info(f"Progress: {processed_files}/{total_files} files processed")
-        #
-        # logger.info("Zip archive created successfully")
-        #
-        # # Удаляем директорию pm_assistant
-        # logger.info("Removing pm_assistant directory")
-        # shutil.rmtree(pm_assistant_dir)
+        # Создаем zip архив
+        logger.info("Creating zip archive")
+        zip_path = builds_dir / f"pm_assistant.zip"
+        
+        total_files = sum([len(files) for _, _, files in os.walk(pm_assistant_dir)])
+        processed_files = 0
+        
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(pm_assistant_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, pm_assistant_dir)
+                    logger.info(f"Adding to archive: {arcname}")
+                    zipf.write(file_path, arcname)
+                    processed_files += 1
+                    if processed_files % 10 == 0:
+                        logger.info(f"Progress: {processed_files}/{total_files} files processed")
+        
+        logger.info("Zip archive created successfully")
+        
+        # Удаляем директорию pm_assistant
+        logger.info("Removing pm_assistant directory")
+        shutil.rmtree(pm_assistant_dir)
 
         logger.info("\nBuild completed!")
         logger.info(f"Application is located at: {pm_assistant_dir}")
