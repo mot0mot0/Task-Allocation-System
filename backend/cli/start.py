@@ -248,6 +248,7 @@ class ServiceManager:
         self.pocketbase_exe = self.pocketbase_dir / "pocketbase.exe"
         self.pocketbase_port = 8090
         self.backend_port = 8000
+        self.frontend_port = 5173
 
     def start_pocketbase(self) -> subprocess.Popen | None:
         try:
@@ -394,6 +395,7 @@ class ServiceManager:
     def print_service_urls(self):
         # Используем print вместо logger для вывода URL в консоль
         print("\nServices started successfully:")
+        print(f"├─ Application UI:   http://localhost:{self.frontend_port}")
         print(f"├─ Database UI:      http://localhost:{self.pocketbase_port}/_/")
         print(f"├─ Backend API:      http://localhost:{self.backend_port}")
         print(f"└─ Backend DOC:      http://localhost:{self.backend_port}/docs\n")
@@ -407,7 +409,6 @@ class ServiceManager:
 
 
 def install_dependencies():
-    """Устанавливает зависимости проекта"""
     try:
         # Set environment variables for building llama-cpp-python
         os.environ["CMAKE_ARGS"] = (
@@ -490,6 +491,8 @@ def main():
             logger.error("Failed to start backend")
             manager.stop_all()
             return
+        
+        logger.info("Starting frontend...")
 
         # Show URLs
         manager.print_service_urls()
