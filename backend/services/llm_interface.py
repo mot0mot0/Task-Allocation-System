@@ -6,6 +6,13 @@ import sys
 import time
 from pathlib import Path
 from src.schemas.requests import TaskWithSkills, ExecutorWithSkills
+from src.logger import setup_logging
+
+# Настраиваем логирование
+setup_logging()
+
+# Получаем логгер для llm_interface
+logger = logging.getLogger("llm_interface")
 
 log_dir = Path(__file__).parent.parent / "logs"
 log_dir.mkdir(exist_ok=True)
@@ -17,7 +24,6 @@ log_formatter = logging.Formatter(
     "%(asctime)s [%(levelname)s] [%(name)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-logger = logging.getLogger("llm_interface")
 logger.setLevel(logging.INFO)
 logger.propagate = False
 

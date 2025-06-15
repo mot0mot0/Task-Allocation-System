@@ -2,13 +2,15 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from src.logger import setup_logging
 
 from routers import auth, matching, analyzer, builds
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# Настраиваем логирование
+setup_logging()
+
+# Получаем логгер для бэкенда
+logger = logging.getLogger("backend")
 
 app = FastAPI()
 
@@ -40,8 +42,9 @@ async def health_check():
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    logging.info(f"Request: {request.method} {request.url}")
+    logger.info(f"Request: {request.method} {request.url}")
     response = await call_next(request)
+    logger.info(f"Response: {request.method} {request.url} - Status: {response.status_code}")
     return response
 
 

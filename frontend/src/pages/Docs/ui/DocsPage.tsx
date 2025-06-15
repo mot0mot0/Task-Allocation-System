@@ -1,4 +1,5 @@
 import { useState } from "react"
+import CodeBlock from "../../../components/CodeBlock"
 
 const DocsPage = () => {
     const [activeSection, setActiveSection] = useState("overview")
@@ -7,6 +8,7 @@ const DocsPage = () => {
         { id: "overview", title: "Обзор" },
         { id: "installation", title: "Установка" },
         { id: "start", title: "Запуск" },
+        { id: "logs", title: "Логирование" },
         { id: "api", title: "Интеграция" },
         { id: "security", title: "Безопасность" },
     ]
@@ -15,7 +17,7 @@ const DocsPage = () => {
         setActiveSection(sectionId)
         const element = document.getElementById(sectionId)
         if (element) {
-            const headerOffset = 88 // Примерный отступ для mt-22 (5.5rem * 16px)
+            const headerOffset = 88
             const elementPosition = element.getBoundingClientRect().top
             const offsetPosition =
                 elementPosition + window.scrollY - headerOffset
@@ -77,33 +79,47 @@ const DocsPage = () => {
                             id="installation"
                             className="flex flex-col gap-4 rounded-lg bg-(--bg-semi-transparent) p-6 shadow-md"
                         >
-                            <h2 className="(--text-color-primary) text-2xl font-semibold">
+                            <h2 className=" text-2xl font-semibold">
                                 Установка
                             </h2>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className="space-y-6">
                                 <div>
-                                    <h3 className="(--text-color-primary) mb-2 text-xl font-medium">
-                                        Frontend
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Скачивание сборки
                                     </h3>
-                                    <ul className="(--text-color-primary) list-inside list-disc space-y-1">
-                                        <li>React 18</li>
-                                        <li>TypeScript</li>
-                                        <li>PrimeReact</li>
-                                        <li>Tailwind CSS</li>
-                                        <li>React Router</li>
-                                    </ul>
+                                    <p className="mb-4">
+                                        Для установки PM Assistant вы можете скачать готовую сборку системы. Сборка включает в себя все необходимые компоненты и зависимости.
+                                    </p>
+                                    <a
+                                        href="http://localhost:8000/builds/pm_assistant_latest.zip"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-(--primary-app-color) px-4 py-2 text-[#334155] transition-all duration-300 hover:bg-[#72efddcc]"
+                                    >
+                                        <i className="pi pi-download" />
+                                        Скачать последнюю версию
+                                    </a>
                                 </div>
+
                                 <div>
-                                    <h3 className="(--text-color-primary) mb-2 text-xl font-medium">
-                                        Backend
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Запуск системы
                                     </h3>
-                                    <ul className="(--text-color-primary) list-inside list-disc space-y-1">
-                                        <li>Node.js</li>
-                                        <li>Express</li>
-                                        <li>MongoDB</li>
-                                        <li>JWT Authentication</li>
-                                        <li>Mongoose</li>
-                                    </ul>
+                                    <p className="mb-4">
+                                        После скачивания сборки, распакуйте архив и запустите систему через командную строку:
+                                    </p>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h4 className="mb-2 text-lg font-medium">
+                                                Распаковка архива
+                                            </h4>
+                                            <CodeBlock code="unzip pm_assistant_latest.zip" />
+                                        </div>
+                                        <div>
+                                            <h4 className="mb-2 text-lg font-medium">
+                                                Запуск системы
+                                            </h4>
+                                            <CodeBlock code="cd pm_assistant\npm_assistant.exe" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -112,47 +128,166 @@ const DocsPage = () => {
                             id="start"
                             className="flex flex-col gap-4 rounded-lg bg-(--bg-semi-transparent) p-6 shadow-md"
                         >
-                            <h2 className="(--text-color-primary) text-2xl font-semibold">
-                                Запуск
+                            <h2 className=" text-2xl font-semibold">
+                                Запуск системы
                             </h2>
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 <div>
-                                    <h3 className="(--text-color-primary) mb-2 text-xl font-medium">
-                                        Требования
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Автоматическая настройка
                                     </h3>
-                                    <ul className="(--text-color-primary) list-inside list-disc space-y-1">
-                                        <li>Node.js 18+</li>
-                                        <li>MongoDB 6+</li>
-                                        <li>Yarn 1.22+</li>
+                                    <p className="mb-4">
+                                        При первом запуске система автоматически выполнит все необходимые настройки:
+                                    </p>
+                                    <ul className="list-inside list-disc space-y-2">
+                                        <li>
+                                            <span className="font-medium">Установка PocketBase</span> - автоматическая загрузка и настройка базы данных
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">Установка LLM</span> - загрузка и настройка языковой модели для анализа задач
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">Настройка портов</span> - автоматическое определение и назначение свободных портов
+                                        </li>
                                     </ul>
                                 </div>
+
                                 <div>
-                                    <h3 className="(--text-color-primary) mb-2 text-xl font-medium">
-                                        Frontend
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Доступ к компонентам
                                     </h3>
-                                    <pre className="(--text-color-primary) rounded-lg bg-gray-100 p-4 text-sm">
-                                        <code>
-                                            cd frontend
-                                            <br />
-                                            yarn install
-                                            <br />
-                                            yarn dev
-                                        </code>
-                                    </pre>
+                                    <p className="mb-4">
+                                        После запуска система предоставляет доступ к следующим компонентам:
+                                    </p>
+                                    <div className="space-y-4">
+                                        <h4 className="mb-2 text-lg font-medium text-white">
+                                            Веб-интерфейс
+                                        </h4>
+                                        <CodeBlock code="http://localhost:3000" />
+                                        <p className="mt-2 text-sm text-gray-400">
+                                            Основной интерфейс системы для работы с задачами и исполнителями
+                                        </p>
+                                        <h4 className="mb-2 text-lg font-medium text-white">
+                                            API
+                                        </h4>
+                                        <CodeBlock code="http://localhost:8000" />
+                                        <p className="mt-2 text-sm text-gray-400">
+                                            REST API для интеграции с другими системами
+                                        </p>
+                                        <h4 className="mb-2 text-lg font-medium text-white">
+                                            PocketBase
+                                        </h4>
+                                        <CodeBlock code="http://localhost:8090" />
+                                        <p className="mt-2 text-sm text-gray-400">
+                                            Административный интерфейс базы данных
+                                        </p>
+                                    </div>
                                 </div>
+
                                 <div>
-                                    <h3 className="(--text-color-primary) mb-2 text-xl font-medium">
-                                        Backend
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Первый вход
                                     </h3>
-                                    <pre className="(--text-color-primary) rounded-lg bg-gray-100 p-4 text-sm">
-                                        <code>
-                                            cd backend
-                                            <br />
-                                            yarn install
-                                            <br />
-                                            yarn dev
-                                        </code>
-                                    </pre>
+                                    <p className=" mb-4">
+                                        При первом запуске система автоматически создаст учетную запись администратора:
+                                    </p>
+                                    <CodeBlock code='Email: admin@example.com
+Password: admin123' />
+                                    <p className="mt-4 text-sm text-(--text-color-secondary)">
+                                        Рекомендуется сменить пароль администратора после первого входа в систему.
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section
+                            id="logs"
+                            className="flex flex-col gap-4 rounded-lg bg-(--bg-semi-transparent) p-6 shadow-md"
+                        >
+                            <h2 className=" text-2xl font-semibold">
+                                Логирование
+                            </h2>
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Типы логов
+                                    </h3>
+                                    <ul className=" list-inside list-disc space-y-2">
+                                        <li>
+                                            <span className="font-medium">backend.log</span> - логи основного бэкенда
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">llm.log</span> - логи работы с языковой моделью
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">allocator.log</span> - логи процесса распределения задач
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">matching.log</span> - логи маршрутизатора распределения
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">startup.log</span> - логи запуска системы
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h3 className="mb-4 text-xl font-medium">
+                                        Просмотр логов
+                                    </h3>
+                                    <p className=" mb-4">
+                                        Для просмотра логов используйте CLI утилиту в директории backend:
+                                    </p>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h4 className=" mb-2 text-lg font-medium">
+                                                Просмотр всех логов
+                                            </h4>
+                                            <CodeBlock code="python cli/logs.py" />
+                                        </div>
+                                        <div>
+                                            <h4 className=" mb-2 text-lg font-medium">
+                                                Просмотр конкретного лога
+                                            </h4>
+                                            <CodeBlock code="python cli/logs.py --type allocator" />
+                                        </div>
+                                        <div>
+                                            <h4 className=" mb-2 text-lg font-medium">
+                                                Последние N строк
+                                            </h4>
+                                            <CodeBlock code="python cli/logs.py --tail 10" />
+                                        </div>
+                                        <div>
+                                            <h4 className=" mb-2 text-lg font-medium">
+                                                Логи за последние N часов
+                                            </h4>
+                                            <CodeBlock code="python cli/logs.py --since 2" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Формат логов
+                                    </h3>
+                                    <p className=" mb-4">
+                                        Каждая запись в логе имеет следующий формат:
+                                    </p>
+                                    <CodeBlock code="YYYY-MM-DD HH:MM:SS - logger_name - LEVEL - message" />
+                                    <ul className=" mt-4 list-inside list-disc space-y-2">
+                                        <li>
+                                            <span className="font-medium">YYYY-MM-DD HH:MM:SS</span> - дата и время события
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">logger_name</span> - имя логгера (компонент системы)
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">LEVEL</span> - уровень важности (INFO, WARNING, ERROR)
+                                        </li>
+                                        <li>
+                                            <span className="font-medium">message</span> - сообщение о событии
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </section>
@@ -161,90 +296,200 @@ const DocsPage = () => {
                             id="api"
                             className="flex flex-col gap-4 rounded-lg bg-(--bg-semi-transparent) p-6 shadow-md"
                         >
-                            <h2 className="(--text-color-primary) mb-4 text-2xl font-semibold">
-                                API-итнеграция
+                            <h2 className=" mb-4 text-2xl font-semibold">
+                                API-интеграция
                             </h2>
+                            <p className=" mb-4">
+                                Вы можете интегрировать инструменты PM Assistant в собственные приложения при помощи REST API. API предоставляет доступ ко всем основным функциям системы: аутентификации пользователей, анализу задач и исполнителей, распределению задач и управлению сборками. Все запросы к API должны содержать JWT токен в заголовке Authorization для аутентификации, кроме эндпоинтов инициализации системы и входа.
+                            </p>
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="(--text-color-primary) mb-4 text-xl font-medium">
-                                        Нативный интерфейс
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Аутентификация
                                     </h3>
-                                    <p className="(--text-color-primary) mb-4">
-                                        Система предоставляет удобный
-                                        веб-интерфейс для работы с задачами и
-                                        исполнителями. Через интерфейс вы
-                                        можете:
-                                    </p>
-                                    <ul className="(--text-color-primary) list-inside list-disc space-y-2">
-                                        <li>Создавать и управлять задачами</li>
-                                        <li>
-                                            Добавлять и редактировать
-                                            исполнителей
-                                        </li>
-                                        <li>
-                                            Анализировать навыки исполнителей
-                                        </li>
-                                        <li>
-                                            Анализировать сложность и требуемые
-                                            компетенции задач и компетенции,
-                                            необходимые для их выполнения
-                                        </li>
-                                        <li>
-                                            Получать рекомендации по
-                                            распределению задач
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <div>
-                                    <h3 className="(--text-color-primary) mb-4 text-xl font-medium">
-                                        API интеграция
-                                    </h3>
-                                    <p className="(--text-color-primary) mb-4">
-                                        Для автоматизации процессов и интеграции
-                                        с другими системами доступны следующие
-                                        API endpoints:
-                                    </p>
                                     <div className="space-y-6">
                                         <div className="border-l-4 border-(--primary-app-color) pl-4">
-                                            <h4 className="(--text-color-primary) text-lg font-medium">
-                                                Анализ задач
+                                            <h4 className="text-lg font-medium">
+                                                Инициализация системы
                                             </h4>
-                                            <ul className="(--text-color-primary) mt-2 space-y-2">
+                                            <ul className="mt-2 space-y-2">
                                                 <li>
                                                     <span className="inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
                                                         POST
                                                     </span>
                                                     <span className="ml-2">
-                                                        /analyze/tasks
+                                                        /auth/init
                                                     </span>
                                                     <p className="mt-1 text-sm text-(--text-color-secondary)">
-                                                        Анализ списка задач и их
-                                                        требований. Возвращает
-                                                        оценку необходимых
-                                                        навыков для каждой
-                                                        задачи.
+                                                        Создание первого администратора системы. Возвращает токен и данные пользователя.
                                                     </p>
                                                 </li>
                                             </ul>
                                         </div>
                                         <div className="border-l-4 border-(--primary-app-color) pl-4">
-                                            <h4 className="(--text-color-primary) text-lg font-medium">
-                                                Анализ исполнителей
+                                            <h4 className="text-lg font-medium">
+                                                Регистрация пользователя
                                             </h4>
-                                            <ul className="(--text-color-primary) mt-2 space-y-2">
+                                            <ul className="mt-2 space-y-2">
                                                 <li>
                                                     <span className="inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
                                                         POST
                                                     </span>
                                                     <span className="ml-2">
-                                                        /analyze/executor
+                                                        /auth/register
                                                     </span>
                                                     <p className="mt-1 text-sm text-(--text-color-secondary)">
-                                                        Анализ резюме
-                                                        исполнителя. Возвращает
-                                                        оценку soft и hard
-                                                        навыков.
+                                                        Создание нового пользователя (только для администраторов). Возвращает токен и данные пользователя.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div className="border-l-4 border-(--primary-app-color) pl-4">
+                                            <h4 className="text-lg font-medium">
+                                                Вход в систему
+                                            </h4>
+                                            <ul className="mt-2 space-y-2">
+                                                <li>
+                                                    <span className="inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                                                        POST
+                                                    </span>
+                                                    <span className="ml-2">
+                                                        /auth/login
+                                                    </span>
+                                                    <p className="mt-1 text-sm text-(--text-color-secondary)">
+                                                        Аутентификация пользователя. Возвращает токен и данные пользователя.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Анализ задач и исполнителей
+                                    </h3>
+                                    <div className="space-y-6">
+                                        <div className="border-l-4 border-(--primary-app-color) pl-4">
+                                            <h4 className="text-lg font-medium">
+                                                Анализ списка задач
+                                            </h4>
+                                            <ul className="mt-2 space-y-2">
+                                                <li>
+                                                    <span className="inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                                                        POST
+                                                    </span>
+                                                    <span className="ml-2">
+                                                        /analyzer/tasks
+                                                    </span>
+                                                    <p className="mt-1 text-sm text-(--text-color-secondary)">
+                                                        Анализ списка задач и их требований. Возвращает оценку необходимых навыков для каждой задачи.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div className="border-l-4 border-(--primary-app-color) pl-4">
+                                            <h4 className="text-lg font-medium">
+                                                Анализ одной задачи
+                                            </h4>
+                                            <ul className="mt-2 space-y-2">
+                                                <li>
+                                                    <span className="inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                                                        POST
+                                                    </span>
+                                                    <span className="ml-2">
+                                                        /analyzer/task
+                                                    </span>
+                                                    <p className="mt-1 text-sm text-(--text-color-secondary)">
+                                                        Анализ отдельной задачи с учетом сроков выполнения. Возвращает оценку необходимых навыков.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div className="border-l-4 border-(--primary-app-color) pl-4">
+                                            <h4 className="text-lg font-medium">
+                                                Анализ исполнителя
+                                            </h4>
+                                            <ul className="mt-2 space-y-2">
+                                                <li>
+                                                    <span className="inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                                                        POST
+                                                    </span>
+                                                    <span className="ml-2">
+                                                        /analyzer/executor
+                                                    </span>
+                                                    <p className="mt-1 text-sm text-(--text-color-secondary)">
+                                                        Анализ резюме исполнителя. Возвращает оценку soft и hard навыков.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Распределение задач
+                                    </h3>
+                                    <div className="space-y-6">
+                                        <div className="border-l-4 border-(--primary-app-color) pl-4">
+                                            <h4 className="text-lg font-medium">
+                                                Распределение задач
+                                            </h4>
+                                            <ul className="mt-2 space-y-2">
+                                                <li>
+                                                    <span className="inline-block rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                                                        POST
+                                                    </span>
+                                                    <span className="ml-2">
+                                                        /allocate
+                                                    </span>
+                                                    <p className="mt-1 text-sm text-(--text-color-secondary)">
+                                                        Распределение списка задач между исполнителями на основе их навыков и доступности.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className=" mb-4 text-xl font-medium">
+                                        Сборки системы
+                                    </h3>
+                                    <div className="space-y-6">
+                                        <div className="border-l-4 border-(--primary-app-color) pl-4">
+                                            <h4 className="text-lg font-medium">
+                                                Список сборок
+                                            </h4>
+                                            <ul className="mt-2 space-y-2">
+                                                <li>
+                                                    <span className="inline-block rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">
+                                                        GET
+                                                    </span>
+                                                    <span className="ml-2">
+                                                        /builds
+                                                    </span>
+                                                    <p className="mt-1 text-sm text-(--text-color-secondary)">
+                                                        Получение списка доступных сборок системы.
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div className="border-l-4 border-(--primary-app-color) pl-4">
+                                            <h4 className="text-lg font-medium">
+                                                Скачивание сборки
+                                            </h4>
+                                            <ul className="mt-2 space-y-2">
+                                                <li>
+                                                    <span className="inline-block rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">
+                                                        GET
+                                                    </span>
+                                                    <span className="ml-2">
+                                                        /builds/{'{build_name}'}
+                                                    </span>
+                                                    <p className="mt-1 text-sm text-(--text-color-secondary)">
+                                                        Скачивание конкретной сборки системы по её имени.
                                                     </p>
                                                 </li>
                                             </ul>
@@ -258,10 +503,10 @@ const DocsPage = () => {
                             id="security"
                             className="flex flex-col gap-4 rounded-lg bg-(--bg-semi-transparent) p-6 shadow-md"
                         >
-                            <h2 className="(--text-color-primary) text-2xl font-semibold">
+                            <h2 className=" text-2xl font-semibold">
                                 Безопасность
                             </h2>
-                            <p className="(--text-color-primary)">
+                            <p className="">
                                 Система разворачивается полностью в вашей
                                 локальной сети, что исключает возможность взлома
                                 системы. Тем не менее, если вам потребуется
@@ -269,7 +514,7 @@ const DocsPage = () => {
                                 защиты от взлома, система использует JWT
                                 аутентификацию и защиту от CSRF атак.
                             </p>
-                            <div className="(--text-color-primary) space-y-4">
+                            <div className=" space-y-4">
                                 <ul className="list-inside list-disc space-y-2">
                                     <li>JWT аутентификация</li>
                                     <li>Защита от CSRF атак</li>

@@ -136,7 +136,7 @@ const DemoPage = () => {
             ? Object.entries(data.soft)
                   .map(
                       ([skill, value]) =>
-                          `${skill}: ${(Number(value) * 100).toFixed(0)}%`
+                          `ㅤ${skill}: ${(Number(value) * 10).toFixed(0)}/10`
                   )
                   .join("\n")
             : ""
@@ -145,7 +145,7 @@ const DemoPage = () => {
             ? Object.entries(data.hard)
                   .map(
                       ([skill, value]) =>
-                          `${skill}: ${(Number(value) * 100).toFixed(0)}%`
+                          `ㅤ${skill}: ${(Number(value) * 10).toFixed(0)}/10`
                   )
                   .join("\n")
             : ""
@@ -237,7 +237,6 @@ const DemoPage = () => {
                     resume: executorToRetry.resume,
                 }
             )
-            console.log("Server response on retry:", response.data)
             setExecutors((prevExecutors) =>
                 prevExecutors.map((executor) =>
                     executor.id === executorToRetry.id
@@ -371,6 +370,8 @@ const DemoPage = () => {
                 : { soft: {}, hard: {} }
             return {
                 id: task.id,
+                title: task.title,
+                description: task.description,
                 start_date: task.start_date,
                 end_date: task.end_date,
                 soft_skills: Object.entries(assessment.soft || {}).map(
@@ -394,6 +395,7 @@ const DemoPage = () => {
                 : { soft: {}, hard: {} }
             return {
                 id: executor.id,
+                name: executor.name,
                 soft_skills: Object.entries(assessment.soft || {}).map(
                     ([name, level]) => ({
                         name,
@@ -419,7 +421,6 @@ const DemoPage = () => {
         setShowAllocationDialog(true)
         setIsAllocating(true)
         setAllocation({})
-        console.log(allocation)
 
         try {
             const data = prepareAllocationData()

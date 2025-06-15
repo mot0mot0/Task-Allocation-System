@@ -1,10 +1,27 @@
 import logging
+from pathlib import Path
 from src.schemas.requests import SkillLevel
 from assets.skills.synonyms import SKILL_SYNONYMS
+
+# Настройка логирования
+log_dir = Path(__file__).parent.parent / "logs"
+log_dir.mkdir(exist_ok=True)
 
 logger = logging.getLogger("normalizer")
 logger.setLevel(logging.INFO)
 logger.propagate = False
+
+# Очищаем существующие обработчики
+logger.handlers = []
+
+# Добавляем новый обработчик файла
+file_handler = logging.FileHandler(log_dir / "allocator.log", encoding="utf-8", mode="a")
+file_handler.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 
 class SkillNormalizer:
     def __init__(self):

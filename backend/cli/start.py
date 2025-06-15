@@ -25,10 +25,35 @@ def get_base_dir() -> Path:
         return Path(__file__).parent.parent
 
 
+def clear_log_files():
+    log_dir = get_base_dir() / "logs"
+    log_dir.mkdir(exist_ok=True)
+    
+    log_files = [
+        "startup.log",
+        "backend.log",
+        "pocketbase.log",
+        "llm.log",
+        "allocator.log",
+        "build.log"
+    ]
+    
+    for log_file in log_files:
+        log_path = log_dir / log_file
+        if log_path.exists():
+            try:
+                log_path.unlink()
+            except Exception as e:
+                print(f"Error clearing log file {log_file}: {e}")
+
+
 # Setting up logging
 base_dir = get_base_dir()
 log_dir = base_dir / "logs"
 log_dir.mkdir(exist_ok=True)
+
+# Очищаем логи при запуске
+clear_log_files()
 
 # Добавляем директорию llama_cpp DLLs для поиска
 if getattr(sys, "frozen", False):
@@ -42,23 +67,23 @@ log_formatter = logging.Formatter(
     "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-# Настраиваем обработчик файла
-file_handler = RotatingFileHandler(
+# Настраиваем обработчик файла для startup.log
+startup_file_handler = RotatingFileHandler(
     log_dir / "startup.log",
     maxBytes=10 * 1024 * 1024,
     backupCount=5,
     encoding="utf-8",  # 10MB
 )
-file_handler.setFormatter(log_formatter)
+startup_file_handler.setFormatter(log_formatter)
 
 # Настраиваем обработчик консоли
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(log_formatter)
 
-# Настраиваем логгер
-logger = logging.getLogger("build")
+# Настраиваем логгер для startup
+logger = logging.getLogger("startup")
 logger.setLevel(logging.INFO)
-logger.addHandler(file_handler)
+logger.addHandler(startup_file_handler)
 logger.addHandler(console_handler)
 
 # Настраиваем основной логгер для вывода важных сообщений в консоль
@@ -69,7 +94,7 @@ main_logger.propagate = False
 
 # Отключаем вывод логов в консоль для всех остальных логгеров
 for name in logging.root.manager.loggerDict:
-    if name not in ["build", "__main__"]:  # Оставляем только основные логгеры
+    if name != "startup":  # Оставляем только startup логгер
         logging.getLogger(name).handlers = []
         logging.getLogger(name).propagate = False
 
@@ -288,7 +313,7 @@ class ServiceManager:
                     uvicorn_logger.handlers.clear()  # Удаляем все существующие обработчики
                     uvicorn_file_handler = RotatingFileHandler(
                         log_dir / "backend.log",
-                        maxBytes=1024 * 1024,  # 1MB
+                        maxBytes=10 * 1024 * 1024,  # 10MB
                         backupCount=5,
                         encoding="utf-8",
                     )
@@ -302,10 +327,11 @@ class ServiceManager:
                     uvicorn_logger.propagate = False  # Отключаем распространение логов
 
                     # Настраиваем логирование для всех остальных логгеров
-                    for name in ["uvicorn.error", "uvicorn.access", "uvicorn.asgi"]:
+                    for name in ["uvicorn.error", "uvicorn.access", "uvicorn.asgi", "fastapi"]:
                         log = logging.getLogger(name)
                         log.handlers.clear()
                         log.addHandler(uvicorn_file_handler)
+                        log.setLevel(logging.INFO)
                         log.propagate = False
 
                     # Запускаем uvicorn
@@ -315,6 +341,7 @@ class ServiceManager:
                         port=self.backend_port,
                         log_level="info",
                         log_config=None,  # Отключаем дефолтную конфигурацию Uvicorn
+                        access_log=True,  # Включаем логирование доступа
                     )
                 except Exception as e:
                     logger.error(f"Error in run_uvicorn: {e}", exc_info=True)
@@ -366,6 +393,7 @@ class ServiceManager:
                     pass
 
     def print_service_urls(self):
+        # Используем print вместо logger для вывода URL в консоль
         print("\nServices started successfully:")
         print(f"├─ Database UI:      http://localhost:{self.pocketbase_port}/_/")
         print(f"├─ Backend API:      http://localhost:{self.backend_port}")
